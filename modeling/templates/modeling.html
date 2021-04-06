@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="card shadow mb-4 border-bottom-primary">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Select a ticker</h6>
+    </div>
+    <div class="card-body">
+        <div>
+        <form action="modeling" method="POST">
+            {% csrf_token %}
+            <div class="input-group">                
+                <input type="text" class="form-control bg-light border-0" placeholder="Search ticker, ie: SPY"
+                aria-label="Search" aria-describedby="basic-addon2" name="new_ticker" style="text-transform:uppercase">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search fa-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+        </div>
+        {% if empty_ticker %}
+        <div class="alert-warning">
+            <p> Oi, mate! Search field is empty! </p>
+        </div>
+        {% endif %}
+        {% if bad_ticker %}
+        <div class="alert-warning">
+           <p> Oi, mate! Can't find ticker {{bad_ticker}}! </p>
+        </div>
+        {% endif %}
+        </div>
+    </div>
+
+    {% if dates %}
+    <div class="card shadow mb-4 border-bottom-primary">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Pick an options expiration date for {{ticker}}</h6>
+        </div>
+        <div class="card-body">
+        <form action="modeling" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="ticker" value ="{{ticker}}">
+            <input type="hidden" name="ticker_type" value ="{{ticker_type}}">
+            {% for date in dates %}
+                <input type="hidden" name="date_array" value ="{{date}}">
+                {% ifequal date date_picked %}
+                    <button class="btn btn-primary" name="new_date" type="submit" value="{{date}}"> {{date}} </button>
+                {% else %}
+                    <button class="btn btn-outline-primary" name="new_date" type="submit" value="{{date}}"> {{date}} </button>
+                {% endifequal %}
+            {% endfor %}
+
+            {% if expiries %}
+            <h6 class="m-2 font-weight-bold text-primary mb-2"> Pick an expiration </h6>
+
+            <input type="hidden" name="date_picked" value ="{{date_picked}}">
+            {% for expiry in expiries %}
+                <input type="hidden" name="expiry_array" value ="{{expiry}}">
+                {% ifequal expiry expiry_picked %}
+                    <button class="btn btn-primary" name="new_expiry" type="submit" value="{{expiry}}"> {{expiry}} </button>
+                {% else %}
+                    <button class="btn btn-outline-primary" name="new_expiry" type="submit" value="{{expiry}}"> {{expiry}} </button>
+                {% endifequal %}
+            {% endfor %}
+        </form>
+        {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if chain %}
+    <div class="card shadow mb-4 border-bottom-primary">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{{ticker}} option chain ({{expiry_picked}})</h6>
+        </div>
+        <div class="card-body">
+        <form action="modeling" method="POST">            
+            {% csrf_token %}
+            <table class="table table-bordered" style="text-align:center">
+                <thead class="thead-dark">
+                <tr>
+                    <th colspan="5">Call</th>
+                    <th colspan="1">{{expiry_picked}}</th>   
+                    <th colspan="5">Put</th>                   
+                </tr>
+                </thead>
+                <thead class="thead-light">
+                <tr>
+                    <th>Last</th>
+                    <th>Bid</th>
+                    <th>Ask</th>
+                    <th>Open Int.</th>
+                    <th>Volume</th>
+                    <th>Strike</th>
+                    <th>Last</th>
+                    <th>Bid</th>
+                    <th>Ask</th>
+                    <th>Open Int.</th>
+                    <th>Volume</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in chain %}
+                <tr>
+                    <td> {{row.0}} </td> 
+                    <td> {{row.1}} </td>
+                    <td> {{row.2}} </td>
+                    <td> {{row.3}} </td>
+                    <td> {{row.4}} </td>
+                    <td class="table-dark"> {{row.5}} </td>
+                    <td> {{row.6}} </td>
+                    <td> {{row.7}} </td>
+                    <td> {{row.8}} </td>
+                    <td> {{row.9}} </td>
+                    <td> {{row.10}} </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </form>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
