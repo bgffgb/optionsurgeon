@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="container">
+  <div class="card shadow mb-4 bg-gradient-info">
+        <div class="card-header py-3 bg-gradient-info">
+          <h6 class="m-0 font-weight-bold text-white">
+            This is the common-folks version on how to use this website. It still assumes you are familiar with option trading, OTM/ITM, spreads, etc. If you're still new to the world of options, 
+            I suggest tread carefully, you might not be ready for it yet. For a deeper dive into the science behind the algos on this site, check out the 
+            <a class="text-warning" href="methodology">methodology</a> section.
+          </h6>
+        </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-10 col-md-12 mx-auto align-items-center">
+
+      <h2 class="section-heading mb-4 mt-4">The idea</h2>
+
+      <p>The general recipe for an option trade is: you make a prediction on the future price movement, you formulate a plan and then execute it/manage your position. A sophisticated gambler.. 
+      I mean investor.. also has some understanding of the likelihood of such events. Most of us look at the Greeks and deltas to eye-ball our decisions, but that's hardly scientific. Well this site 
+      is here to turn bring more science into the equation.</p>
+
+      <p>The idea is simple: you pick a ticker and expiration, you plug in a probability distribution into this website and it gives you which options are good for going long, which ones are good 
+      for shorting, total expected return, likelihood of being in the profit at expiry, etc. You get to mix and match options at will until you get the right strategy for the right situation, 
+      making a better informed decision.</p>
+
+      <h2 class="section-heading mb-4 mt-4">The process</h2>
+
+      <p>Modeling outcomes needs probabilities. This site calculates the Risk-Neutral Distribution already for you - the implied probabilities already priced in by the market. 
+      More on this process <a href="rnd#rnd">here</a> for more science. That's our baseline, and it helps us visualize how the market sees the future of the underlying. 
+      </p>
+      <p>The second step is applying our prediction to it: if we think the stock will go up, we can shift this distribution to the right a bit (increase the probability of the price going up and 
+      decrease the probility of the price going down). Or we think the market is overestimating the volatility, we can decrease the variance of the distribution (reduce the probability of extreme 
+      outcomes and increase the probability of price staying close to the mean). And with this new updated probability model, we recalculate the profitability of all options at their current market 
+      price to find the best opportunities.
+      </p>
+      <div class="card shadow mb-4 bg-gradient-warning">
+        <div class="card-header py-3 bg-gradient-warning">
+          <h6 class="m-0 font-weight-bold text-white">
+            Warning: if your predictions/modeling is off or incorrect, so are the derived expectations and winrates. Garbage in, garbage out. The responsibility of making smart plays is still yours.
+          </h6>
+        </div>
+      </div>
+
+      <h2 class="section-heading mb-4 mt-4">An example</h2>
+
+      <p>Here's a simple, long-term option play. I feel strongly about SPY going to grow over the next 2 years, trading at $420 today. While I can't be sure, I think a 10% growth by January 2023 is a very reasonable expectation, putting my price target at $450, with a 60% likelihood this will happen (my prediction). I will leave a 30% chance out there that it would stay stagnant, or even drop. 
+      </p>
+
+      <h5 class="section-heading mb-2 mt-2">A) Picking the ticker and expiry</h5>
+
+      <div class="col d-flex align-items-center justify-content-center">
+        <figure class="figure m-2">
+          <img class="img-fluid" src="{% static 'img/pick.png' %}" alt="Picking!">
+          <figcaption class="figure-caption text-center">Picking SPY, January 20, 2023 expiry</figcaption>
+        </figure>
+      </div>
+
+      <h5 class="section-heading mb-2 mt-2">B) Adjusting the probabilities</h5>
+
+      <p>In red, we have the Risk Neutral Distribution - the probability priced in by the market. My price target is $450 with 60%-ish probability, so I shifted the mean of the distribution to 
+      reflect this. I also reduced the spread of the distribution, predicting less volatility than what the market is currently pricing in. The end result looks like this:</p>
+      <div class="col d-flex align-items-center justify-content-center">
+        <figure class="figure m-2">
+          <img class="img-fluid" src="{% static 'img/distr.png' %}" alt="Probability Modeling">
+          <figcaption class="figure-caption text-center">Risk Neutral Distribution (priced in) vs Predicted Distribution</figcaption>
+        </figure>
+      </div>
+      
+      <h5 class="section-heading mb-2 mt-2">C) Taking a look at the option chain</h5>
+
+      <p>Putting the price target higher makes buying (going long on) Calls very promising. Expected return percentages range form 60% on the $380 strike to 188% on the $510 strike. Risk adjusted 
+      returns are also positive, but decreasing with the strike price. Buying $510 strike calls could be very profitable, lower capital requirement, but a low chance of success: it either wins big, 
+      or expires worthless. Buying deeper ITM carries lower risk of expiring out of the money, but also has lower average returns.
+      </p>
+      <div class="col d-flex align-items-center justify-content-center">
+        <figure class="figure m-2">
+          <img class="img-fluid" src="{% static 'img/calls.png' %}" alt="SPY 2023 Call chain snippet">
+          <figcaption class="figure-caption text-center">SPY 2023 Call chain snippet</figcaption>
+        </figure>
+      </div>
+      <p>
+      For the put chain, expected returns are in the red for long option holders, so selling them (going short) is the right call. Risk adjusted returns are really good for selling OTM puts and 
+      put spreads.
+      </p>
+      <div class="col d-flex align-items-center justify-content-center">
+        <figure class="figure m-2">
+          <img class="img-fluid" src="{% static 'img/puts.png' %}" alt="SPY 2023 Put chain snippet">
+          <figcaption class="figure-caption text-center">SPY 2023 Put chain snippet</figcaption>
+        </figure>
+      </div>
+
+      <h5 class="section-heading mb-2 mt-2">D) Building a strategy</h5>
+
+      <p>Picking the right strategy is largely a matter of personal taste and risk tolerance.</p>
+      <div class="col d-flex align-items-center justify-content-center mb-2">
+        <video autoplay="" muted="" name="media" loop="">
+          <source src="https://snipcart.com/media/204378/decisions.webm" type="video/webm">
+        </video>
+      </div>
+      <p> Going long on calls and shorting puts are clearly the right building blocks. Let's explore getting a synthetic 
+      long (buying a call and shorting a put at the same strike) - as this behaves very similar to owning SPY shares, just higher leverage. Synthetic longs are best priced at the current underlying 
+      price, so $420 strike it is. I also prefer to have decent downside proteciton and reduce the margin required, so I'm also buying a $390 protective put. The return profile will look like this:
+      </p>
+      <div class="col d-flex align-items-center justify-content-center">
+        <figure class="figure m-2">
+          <img class="img-fluid" src="{% static 'img/strat1.png' %}" alt="Return profile by strike">
+          <figcaption class="figure-caption text-center">Return by strike</figcaption>
+        </figure>
+      </div>
+
+      <p>This option play costs about $3530 to set up (should be more, as <a href="rnd">it assumes getting filled at the mid rate of the Bid-Ask spread</a>). Has an expected return of $3212, or a whopping 90% return ($3212/$3530) - assuming my prediction of future probabilities is correct. Max loss is capped at $5381 - out of which $3530 is the premium paid right now, and the remainder is on margin. It has a 63%  probability of turning a profit on expiry, with a break-even point at $445 strike.</p>
+
+      <p>Or when adjusted for the likelihood of the outcomes (multiplying the returns with the probability distribution), the return profile of this option strategy looks like this:</p>
+      <div class="col d-flex align-items-center justify-content-center">
+        <figure class="figure m-2">
+          <img class="img-fluid" src="{% static 'img/strat2.png' %}" alt="Return profile by strike">
+          <figcaption class="figure-caption text-center">Return by strike, adjusted for likelihood</figcaption>
+        </figure>
+      </div>
+      <p>The 62% probability of making money on this option trade might be too risky for some, or not risky enough for others. Selling a Put spread would have a higher win probability, 
+         lower returns, buying OTM calls has lower win probability, higher returns. You do you!</p>
+      <div class="col d-flex align-items-center justify-content-center">
+        <h2 class="section-heading mb-4 mt-4">That's it. You're ready. Go get'em tiger!</h2>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

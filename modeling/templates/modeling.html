@@ -2,6 +2,19 @@
 {% load static %}
 
 {% block page_content %}
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="{% static 'js/modeling.js' %}"></script>
+
+<div class="card shadow mb-4 bg-gradient-warning">
+  <div class="card-header py-3 bg-gradient-info">
+    <h6 class="m-0 font-weight-bold text-white">
+    <a class="text-warning" href="tutorial">First time around? Not sure what to do? Click here to for a tutorial.<a>
+    </h6>
+  </div>
+</div>
+<form action="modeling" method="POST">
+{% csrf_token %}
 <div class="container-fluid">
     <div class="card shadow mb-4 border-bottom-primary">
     <div class="card-header py-3">
@@ -9,18 +22,15 @@
     </div>
     <div class="card-body">
         <div>
-        <form action="modeling" method="POST">
-            {% csrf_token %}
-            <div class="input-group">                
+            <div class="input-group">
                 <input type="text" class="form-control bg-light border-0" placeholder="Search ticker, ie: SPY"
                 aria-label="Search" aria-describedby="basic-addon2" name="new_ticker" style="text-transform:uppercase">
                 <div class="input-group-append">
-                    <button class="btn btn-primary" type="submit">
+                    <button class="btn btn-primary" name="submit_ticker" type="submit">
                         <i class="fas fa-search fa-sm"></i>
                     </button>
                 </div>
             </div>
-        </form>
         </div>
         {% if empty_ticker %}
         <div class="alert-warning">
@@ -41,8 +51,6 @@
             <h6 class="m-0 font-weight-bold text-primary">Pick an options expiration date for {{ticker}}</h6>
         </div>
         <div class="card-body">
-        <form action="modeling" method="POST">
-            {% csrf_token %}
             <input type="hidden" name="ticker" value ="{{ticker}}">
             <input type="hidden" name="ticker_type" value ="{{ticker_type}}">
             {% for date in dates %}
@@ -56,8 +64,9 @@
 
             {% if expiries %}
             <h6 class="m-2 font-weight-bold text-primary mb-2"> Pick an expiration </h6>
-
             <input type="hidden" name="date_picked" value ="{{date_picked}}">
+            <input type="hidden" name="expiry_picked" value ="{{expiry_picked}}">
+
             {% for expiry in expiries %}
                 <input type="hidden" name="expiry_array" value ="{{expiry}}">
                 {% ifequal expiry expiry_picked %}
@@ -66,66 +75,248 @@
                     <button class="btn btn-outline-primary" name="new_expiry" type="submit" value="{{expiry}}"> {{expiry}} </button>
                 {% endifequal %}
             {% endfor %}
-        </form>
         {% endif %}
         </div>
     </div>
     {% endif %}
 
-    {% if chain %}
+    {% if chart %}
     <div class="card shadow mb-4 border-bottom-primary">
+        <script>
+        var mean_level = {{mean_level | escapejs}};
+        var var_level = {{var_level | escapejs}};
+	var distrib_params = {{distrib_params | escapejs}};
+        </script>
+
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">{{ticker}} option chain ({{expiry_picked}})</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Expected distribution for {{ticker}} ({{expiry_picked}})</h6>
         </div>
+
         <div class="card-body">
-        <form action="modeling" method="POST">            
-            {% csrf_token %}
-            <table class="table table-bordered" style="text-align:center">
-                <thead class="thead-dark">
-                <tr>
-                    <th colspan="5">Call</th>
-                    <th colspan="1">{{expiry_picked}}</th>   
-                    <th colspan="5">Put</th>                   
-                </tr>
-                </thead>
+        <script>
+	var rnd_data = JSON.parse('{{chart | escapejs}}');
+        {% if chart_modded %}
+	var rnd_modded = JSON.parse('{{chart_modded | escapejs}}');
+        {% else %}
+        var rnd_modded = rnd_data;
+        {% endif %}
+	</script>
+        <div class="row">
+          <div class="col-md-2">
+            <button class="btn btn-primary btn-icon-split" name="shift" value="mean_up" 
+             style="width:100%; justify-content: left;">
+                <span class="icon text-white-50">
+                    <i class="fas fa-arrow-left"></i>
+                </span>
+                <span class="text">Shift Left</span>
+            </button>
+            <button class="btn btn-primary btn-icon-split" name="shift" value="mean_down" 
+             style="width:100%; justify-content: left;">
+                <span class="icon text-white-50">
+                    <i class="fas fa-arrow-right"></i>
+                </span>
+                <span class="text">Shift Right</span>
+            </button>
+            <button class="btn btn-primary btn-icon-split" name="shift" value="var_up" 
+             style="width:100%; justify-content: left;">
+                <span class="icon text-white-50">
+                    <i class="fas fa-arrow-down"></i>
+                </span>
+                <span class="text">Flatten</span>
+            </button>
+            <button class="btn btn-primary btn-icon-split" name="shift" value="var_down"
+             style="width:100%; justify-content: left;">
+                <span class="icon text-white-50">
+                    <i class="fas fa-arrow-up"></i>
+                </span>
+                <span class="text">Elevate</span>
+            </button>
+            <button class="btn btn-primary btn-icon-split" name="shift" value="reset" 
+             style="width:100%; justify-content: left;">
+                <span class="icon text-white-50">
+                    <i class="fas fa-ban"></i>
+                </span>
+                <span class="text">Reset</span>
+            </button>
+          </div>
+          <div class="col-md-10" id="chartdiv">
+            <svg></svg>
+          </div>
+        </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if chart %}
+    <div class="card shadow mb-4 border-bottom-primary">
+        <a href="#portfolio" class="card-header py-3" data-toggle="collapse" 
+           role="button" aria-expanded="true" aria-controls="portfolio">
+            <h6 class="m-0 font-weight-bold text-primary">Option picks</h6>
+        </a>
+        <div class="card-body collapse show" id="portfolio">
+            <h6 class="m-0 font-weight-bold text-primary" id="portfoliotext">Add Call/Put options from the below option chain to see
+            payout distribution, ROI and risk adjusted returns.</h6>
+            <div class="row" id="portfoliodiv">
+                <div class="col-md-3">
+                  <div class="row m-2" style="display:block;">
+                      <span class="text font-weight-bold text-primary" style="float:left;">Expected Return: </span>
+                      <span class="text font-weight-bold text-warning" id="expr" style="float:right;"></span>
+                  </div>
+                  <div class="row m-2" style="display:block;">
+                    <span class="text font-weight-bold text-primary" style="float:left;">Cost/Credit: </span>
+                    <span class="text font-weight-bold text-warning" id="totcost" style="float:right;"></span>
+                  </div>
+                  <div class="row m-2" style="display:block;">
+                    <span class="text font-weight-bold text-primary" style="float:left;">Chance Positive: </span>
+                    <span class="text font-weight-bold text-warning" id="winp" style="float:right;"></span>
+                  </div>
+                  <table class="table table-bordered" style="text-align:center" id="portfoliotable">
+                    <thead class="thead-light">
+                      <tr>
+                        <th>Position</th>
+                        <th>Contract</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <div class="col-md-9" style="display:inline-block;text-align:center;width:50%;">
+                    <button class="btn btn-primary btn-icon-split" name="toggle" value="toggle" position=fixed>
+                        <span class="icon text-white-50"><i class="fas fa-toggle-off" id="toggle"></i></span>
+                        <span class="text">Toggle probabilities</span>
+                    </button>
+                  <div id="portfoliochartdiv">
+                    <svg></svg>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if call_chain %}
+    <div class="card shadow mb-4 border-bottom-primary">
+        <a href="#callchaindiv" class="card-header py-3" data-toggle="collapse" 
+           role="button" aria-expanded="true" aria-controls="callchaindiv">
+            <h6 class="m-0 font-weight-bold text-primary">Call chain ({{ticker}} - {{expiry_picked}})</h6>
+        </a>
+        <div class="card-body collapse show" id="callchaindiv">
+            <script>
+            var callchain = {{call_chain}};
+            var callqty = Array.apply(null, Array({{call_chain | length}})).map(Number.prototype.valueOf, 0);
+            </script>
+            <table class="table table-bordered" style="text-align:center" id="calltable">
                 <thead class="thead-light">
                 <tr>
-                    <th>Last</th>
-                    <th>Bid</th>
-                    <th>Ask</th>
-                    <th>Open Int.</th>
-                    <th>Volume</th>
+                    <th>Positions <i class="fa fa-question-circle" data-toggle="tooltip" 
+                    title="Use + to go long on an option contract, - to go short"></i>
+                    </th>
                     <th>Strike</th>
                     <th>Last</th>
                     <th>Bid</th>
                     <th>Ask</th>
                     <th>Open Int.</th>
                     <th>Volume</th>
+                    <th>Expected Return <i class="fa fa-question-circle" data-toggle="tooltip" 
+                    title="Expected return if option is bought at mid price of the Bid/Ask spread (going long)"></i></th>
+                    <th>Sharpe Ratio <i class="fa fa-question-circle" data-toggle="tooltip" 
+                    title="Sharpe ratio is the risk adjusted return for the option, bought at mid price of the Bid/Ask spread (going long)"></i></th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for row in chain %}
+                {% for row in call_chain %}
                 <tr>
-                    <td> {{row.0}} </td> 
+                    <td>
+                        <button class="btn btn-primary" name="{{forloop.counter0}}" value="callinc">
+                        <span class="icon text-white-50">
+                        <i class="fas fa-plus"></i>
+                        </span>          
+                        </button>
+                        <span id="c{{forloop.counter0}}">0</span>
+                        <button class="btn btn-primary" name="{{forloop.counter0}}" value="calldec">
+                        <span class="icon text-white-50">
+                        <i class="fas fa-minus"></i>
+                        </span>
+                        </button>
+                    </td>                                          
+                    <td class="table-dark"> {{row.0}} </td>
                     <td> {{row.1}} </td>
                     <td> {{row.2}} </td>
                     <td> {{row.3}} </td>
                     <td> {{row.4}} </td>
-                    <td class="table-dark"> {{row.5}} </td>
+                    <td> {{row.5}} </td>
                     <td> {{row.6}} </td>
                     <td> {{row.7}} </td>
-                    <td> {{row.8}} </td>
-                    <td> {{row.9}} </td>
-                    <td> {{row.10}} </td>
                 </tr>
                 {% endfor %}
                 </tbody>
             </table>
-        </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if put_chain %}
+    <div class="card shadow mb-4 border-bottom-primary">
+        <a href="#putchaindiv" class="card-header py-3" data-toggle="collapse" 
+           role="button" aria-expanded="true" aria-controls="putchaindiv">
+            <h6 class="m-0 font-weight-bold text-primary">Put chain ({{ticker}} - {{expiry_picked}})</h6>
+        </a>
+        <div class="card-body" id="putchaindiv">
+            <script>
+            var putchain = {{put_chain}};
+            var putqty = Array.apply(null, Array({{call_chain | length}})).map(Number.prototype.valueOf, 0);
+            </script>
+            <table class="table table-bordered" style="text-align:center" id="puttable">
+                <thead class="thead-light">
+                <tr>
+                    <th>Positions <i class="fa fa-question-circle" data-toggle="tooltip" 
+                    title="Use + to go long on an option contract, - to go short"></i>
+                    </th>
+                    <th>Strike</th>
+                    <th>Last</th>
+                    <th>Bid</th>
+                    <th>Ask</th>
+                    <th>Open Int.</th>
+                    <th>Volume</th>
+                    <th>Expected Return <i class="fa fa-question-circle" data-toggle="tooltip" 
+                    title="Expected return if option is bought at mid price of the Bid/Ask spread (going long)"></i></th>
+                    <th>Sharpe Ratio <i class="fa fa-question-circle" data-toggle="tooltip" 
+                    title="Sharpe ratio is the risk adjusted return for the option, bought at mid price of the Bid/Ask spread (going long)"></i></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in put_chain %}
+                <tr>
+                    <td>
+                        <button class="btn btn-primary" name="{{forloop.counter0}}" value="putinc">
+                        <span class="icon text-white-50">
+                        <i class="fas fa-plus"></i>
+                        </span>          
+                        </button>
+                        <span id="p{{forloop.counter0}}">0</span>
+                        <button class="btn btn-primary" name="{{forloop.counter0}}" value="putdec">
+                        <span class="icon text-white-50">
+                        <i class="fas fa-minus"></i>
+                        </span>
+                        </button>
+                    </td> 
+                    <td class="table-dark"> {{row.0}} </td>
+                    <td> {{row.1}} </td>
+                    <td> {{row.2}} </td>
+                    <td> {{row.3}} </td>
+                    <td> {{row.4}} </td>
+                    <td> {{row.5}} </td>
+                    <td> {{row.6}} </td>
+                    <td> {{row.7}} </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
     {% endif %}
 
 </div>
-{% endblock %}
+</form>
 
+{% endblock %}

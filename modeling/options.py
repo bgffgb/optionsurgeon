@@ -20,26 +20,62 @@ class Option:
         return self.type + ' ' + str(self.strike) + '$: Bid ' + str(self.bid) + ' Ask ' + str(self.ask) + ' Vol ' \
                + str(self.vol) + ' OI ' + str(self.oi) + ' Last ' + str(self.last)
 
-    def get_profit(self, stock_price, eval_type='MID'):
+    def summary(self):
+        return self.type + ' ' + str(self.strike) 
+
+    def evaluate(self, strikes, probs, eval_type='MID', special=False):
         '''
-        Returns profit fot this option, assuming it is held LONG (quantity = -1)
+        Returns expected returns, sharpe ratio and payout distribution 
+        profit for this option, assuming it is held LONG (quantity = 1),
+        for given strikes and their probability of happening
         '''
-        if eval_type == 'MID':
-            profit = (self.bid + self.ask) / 2 # Premium from the deal
-        elif eval_type == 'ASK':
-            profit = self.ask  # Premium paid for the deal
-        elif eval_type == 'BID':
-            profit = self.bid  # Premium received for the deal
+        returns = []
+        expectation = 0
+        norm = sum(probs)
+        for (st, pr) in zip(strikes, probs):
+            profit = self.get_profit(st, eval_type, special=special)
+            expectation += profit * pr
+            returns.append(profit)
+        expectation /= norm
+        stdev = 0
+        for (ret, prob) in zip(returns, probs):
+            stdev += prob/norm * ((ret - expectation) ** 2)
+        stdev = stdev ** 0.5
+        if stdev == 0:
+            stdev, mean = 1, 0
+        sharpe = expectation / stdev        
+
+        return expectation, sharpe, returns
+
+    def get_profit(self, stock_price, eval_type='MID', long=True, special=False):
+        '''
+        Returns profit for this option
+        '''
+        profit = 0
 
         if self.type == 'CALL' and stock_price > self.strike:
-            profit += (self.strike - stock_price)
-        if self.type == 'PUT' and stock_price < self.strike:
             profit += (stock_price - self.strike)
+        if self.type == 'PUT' and stock_price < self.strike:
+            profit += (self.strike - stock_price)
+        
+        if eval_type == 'MID':
+            premium = -(self.bid + self.ask) / 2 # Premium paid for the option
+        elif eval_type == 'ASK':
+            premium = -self.ask  # Premium paid for the option
+        elif eval_type == 'BID':
+            premium = -self.bid  # Premium paid for the option
 
-        return -100 * profit
+        refprofit = premium + profit
+        if special:
+            for r in [0.1, 0.5, 0.9]:
+                premium = -self.get_premium(r)
+                if abs(premium + profit) < abs(refprofit):
+                    refprofit = premium + profit
 
-    def get_premium(self):
-        return (self.bid + self.ask) / 2 # Premium from the deal
+        return 100 * refprofit
+
+    def get_premium(self, r=0.5):
+        return (self.bid * r  + self.ask * (1 - r)) # Premium from the deal
 
 
 class OptionChain:
@@ -49,6 +85,9 @@ class OptionChain:
         self.call_strikes = []
         self.put_strikes = []
         self.strikes = []
+
+    def set_underlying(self, val):
+        self.underlying = val
 
     def add_option(self, o : Option):
         if not o.is_valid():
@@ -107,6 +146,20 @@ class OptionChain:
         sorted_table = []
         for st in sorted(table.keys()):
             sorted_table.append(table[st])
+        return sorted_table
+
+    def get_call_table(self):
+        sorted_table = []
+        for _, calls in self.get_calls().items():
+            for o in calls:
+                sorted_table.append([o.strike, o.last, o.bid, o.ask, o.oi, o.vol, 0, 0])
+        return sorted_table
+
+    def get_put_table(self):
+        sorted_table = []
+        for _, puts in self.get_puts().items():
+            for o in puts:
+                sorted_table.append([o.strike, o.last, o.bid, o.ask, o.oi, o.vol, 0, 0])
         return sorted_table
 
     def get_options(self):

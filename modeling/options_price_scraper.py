@@ -24,12 +24,17 @@ def is_class_empty(arr):
 class MWTableHTMLParser(HTMLParser):
     ORDER = ['WAIT', 'CALL_LAST', 'CALL_CHANGE', 'CALL_BID', 'CALL_ASK', 'CALL_VOL', 'CALL_OI',
              'STRIKE', 'PUT_LAST', 'PUT_CHANGE', 'PUT_BID', 'PUT_ASK', 'PUT_VOL', 'PUT_OI']
-    process = False
-    status_index = 0
-    strike_on = False
-    options = OptionChain()
-    keyword_dict = {}
-    target_date_str = ''
+
+    def __init__(self):
+        super().__init__()
+        self.process = False
+        self.status_index = 0
+        self.strike_on = False
+        self.options = OptionChain()
+        self.keyword_dict = {}
+        self.target_date_str = ''
+        self.dates = []
+        self.current_price_warning = False
 
     def feed(self, data, target):
         self.target_date_str = target
@@ -87,6 +92,18 @@ class MWTableHTMLParser(HTMLParser):
             self.reset_status()
 
     def handle_data(self, data):
+        # Need this to get current price
+        if data.startswith("Current price as of"):
+            self.current_price_warning = True
+            return
+        if self.current_price_warning:
+            data = data.strip()
+            if len(data) == 0:
+                return
+            self.current_price_warning = False
+            self.options.set_underlying(float(data[1:]))
+            return
+
         # Turn scraping on for correct table only
         if self.target_date_str in data:
             self.process = True

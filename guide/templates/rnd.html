@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block page_content %}
+
+<div class="container">
+<div class="row">
+<div class="col-lg-10 col-md-12 mx-auto align-items-center">
+
+<h2 class="section-heading mb-4 mt-4">Option Pricing</h2>
+
+<p> Having a bit of understanding of option pricing helps clear up why buying/selling options can be profitable. The short version is, option prices are set by <a href="https://en.wikipedia.org/wiki/Market_maker">market makers<a>. These are institutions providing liquidity by two-sided markets (willing to both sell and buy) during exchange hours. In return, they have some special privileges: reduced trading fees, ability to naked short, etc. Market makers don't speculate on the future price of the underlying asset - rather, they maintain a risk neutral position, making a small percentage on every option contract filled, whether the price goes up, down or flatlines.
+</p>
+
+<p> This option pricing is a mechanical system, following some option pricing model like <a href="https://www.investopedia.com/terms/b/blackscholes.asp">Black-Scholes<a> or <a href="http://www.ericbenhamou.net/documents/articles/OptionLevy.pdf">Levy distribution<a>, done in real-time. Most of these models assume A) the asset price will stay stable in the future, be it over the next week or year B) predict the potential magnitude of price movements based on historical price volatilty.</p>
+
+<p>I highly recommend <a href="https://www.youtube.com/watch?v=ryq_TjCmhx0">Warren Buffet's take on Black Scholes<a>, it does a great job pointing out the weaknesses in mechanical option pricing. It is a "know-nothing affair" - so as long as you have better understanding of the fundamentals, future growth or potential catastrophic downfall of an underlying asset, you can find mispriced options. Unlike market makers, you have the option to pick and choose which positions to enter; market makers might be pricing options correctly 99% of the time, but you get to choose your trades, waiting for that 1% of opportunity.
+<p>
+
+<h2 class="section-heading mb-4 mt-4" id="rnd">Option-Implied Risk-Neutral Distribution (RND)</h2>
+
+<p>
+Option prices are already pricing in potential future price movements. If you take all the Call and Put option prices across all strikes for a given expiration date and turn it into a <a href="https://www.cfainstitute.org/-/media/documents/book/rf-publication/2004/rf-v2004-n1-3925-pdf.ashx">PhD worthy math problem<a>, you can get back the priced in probability distribution of the underlying reaching certain strikes by expiry. It's called the Option-Implied Risk-Neutral Distribution (RND) and is pretty good baseline most of the time.
+</p>
+
+<div class="col d-flex align-items-center justify-content-center">
+<figure class="figure m-2">
+<img class="img-fluid" src="{% static 'img/spy_2023_rnd.png' %}" alt="SPY January 2023 RND">
+<figcaption class="figure-caption text-center">SPY January 2023 Risk-Neutral Distribution</figcaption>
+</figure>
+</div>
+
+<h2 class="section-heading mb-4 mt-4">RND estimation in practice</h2>
+
+<p> So how do you get this distribution? If you went through the math, you'll know it's a pretty heavy non-linear optimization problem with no closed-form solution. You unfortunately can't solve it in real-time from an option chain, and most people (like me) are not willing to wait several minutes for the computations to run. So I implemented a decent approximation instead. The method I am applying here estimates probabilities from constructing Call and Put spreads with strike prices close to each other. This gives an estimation of the cumulative distribution function: </p>
+
+<div class="col d-flex align-items-center justify-content-center">
+<figure class="figure mt-2 mb-4">
+<img class="img-fluid" src="{% static 'img/spy_2023_cdf.png' %}" alt="SPY January 2023 Cumulative Distribution Estimates">
+<figcaption class="figure-caption text-center">SPY January 2023 Cumulative Distribution Estimates</figcaption>
+</figure>
+</div>
+
+
+<p> Quite some noise in there and a lot of uncertainty around the tails of the distribution. There's also the issue of picking a good distribution to fit the curve. I tested several approaches, but the best fit is given by the <a href="https://en.wikipedia.org/wiki/Skewed_generalized_t_distribution">Skewed Generalized t-distribution<a>. It is a parametric probability distribution, with parametrized mean, variance, skewness and kurtosis, with a probability density distribution function defined as:
+</p>
+
+<div class="col d-flex align-items-center justify-content-center">
+<figure class="figure m-2">
+<img class="img-fluid" src="{% static 'img/sgt.png' %}" alt="Skewed Generalized t-distribution probability density function magic formula">
+<figcaption class="figure-caption text-center">Skewed Generalized t-distribution probability density function magic formula</figcaption>
+</figure>
+</div>
+
+<p> Rather intimidating. No simple formula for the cumulative distribution. Some dark wizardry and numerical methods are still needed to speed up the optimization to run in less than 1 second on any option chain, but ultimately, the fitted distribution (in orange) is pretty good:</p>
+
+
+<div class="col d-flex align-items-center justify-content-center">
+<figure class="figure m-2">
+<img class="img-fluid" src="{% static 'img/fitted_cdf.png' %}" alt="Fitted Skewed Generalized t-distribution">
+<figcaption class="figure-caption text-center">Fitted Skewed Generalized t-distribution</figcaption>
+</figure>
+</div>
+
+<h2 class="section-heading mb-4 mt-4" id="limits">Limitations</h2>
+
+<p> <ul>
+<li> The 'fair' price of an option is the middle point between the Bid and Ask prices; in reality, the 'fair' price is probably closer to the Bid price, favoring option sellers. This bias is somewhat reduced by using Call/Put spreads to estimate probabilities, but it still is a source of imprecision, especially with wide Bid/Ask spreads</li>
+<li> Later dated option expiries carry more uncertainty and have generally higher Bid/Ask spreads; RND estimates tend to be less accurate in those cases </li>
+<li> Sometimes options are just priced weirdly; Bid/Ask spreads can be crazy wide and pricing terribly inconsistent; I present to you one such curiosity, GME January 2023 expiry distribution:</li>
+</ul></p>
+
+<div class="col d-flex align-items-center justify-content-center">
+<figure class="figure m-2">
+<img class="img-fluid" src="{% static 'img/gme_2023_cdf.png' %}" alt="GME January 2023 Cumulative Distribution Estimates">
+<figcaption class="figure-caption text-center">GME January 2023 Cumulative Distribution Estimates</figcaption>
+</figure>
+</div>
+
+<p> For all these reasons mentioned above, the fitted RND might seemingly promise great returns on some options. Obviously, you cannot trust it. It can be due to fitting errors, or options are just priced particularly unfavorably. Case in point, here is ae the expected returns from GME class for January 2023 expiry:<p>
+
+<div class="col d-flex align-items-center justify-content-center">
+<figure class="figure m-2">
+<img class="img-fluid" src="{% static 'img/gme_calls.png' %}" alt="GME January 2023 Call expectations based on Fitted RND">
+<figcaption class="figure-caption text-center">GME January 2023 Call expectations based on Fitted RND</figcaption>
+</figure>
+</div>
+
+<p>It would seem selling calls is rather favorable, but this is just a guess by a badly fitted model, not reliable investment advice. If you look at the cumulative distribution funciton from the previous figure, it should be clear why. The data is extremely noisy, there isn't a single, unique distribution that gives a perfect fit over that set of data points. If the fitted RND models would be perfect, all expectations across all puts and calls would be 0.</p>
+
+<div class="card shadow mb-4 bg-gradient-warning">
+<div class="card-header py-3 bg-gradient-warning">
+  <h6 class="m-0 font-weight-bold text-white">
+    You cannot base your investment decisions on the expectation estimates given by the fitted RND estimate; the RND is just a simple indicator, a starting point to visualize (roughly) the priced in probabilities, not a magical shortcut to easy trades.
+  </h6>
+</div>
+</div>
+
+
+<h2 class="section-heading mb-4 mt-4">Raison d'être</h2>
+<p>Understanding option pricing is a very math & statistics heavy undertaking, yet most retail investors struggle with even the basic concepts. For long term success, option traders need to get both the future price and the timing right. All that in real time. Getting to pick from thousands of combinations of strikes and expiration dates. Is a 140/160 Put Spread better than a 150/170 one? How much more likely is one to be profitable than the other? How much of your buying power do they require? Which one has a higher risk adjusted expectation? 
+</p>
+<p>
+I started coding up my own tools to help me with option trading/strategy picking/risk management. Then there was this pandemic thing, a lot more indoor time, so I figured f*ck it, I'll turn it into a website, picking up some new skills on the way.
+</p>
+
+</div>
+</div>
+</div>
+
+{% endblock %}

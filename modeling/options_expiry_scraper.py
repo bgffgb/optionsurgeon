@@ -53,7 +53,12 @@ def scrape_option_dates(ticker, type='stock'):
     res = requests.get(url)
     parser = MWDatesParser()
     parser.feed(res.text)
-    return parser.dates
+
+    # Double check ticker type
+    if "fund/" + ticker.lower() + "/options" in res.text:
+        type = "fund"
+
+    return parser.dates, type
 
 def scrape_option_expiries(ticker, month, year, type='stock'):
     url = "https://www.marketwatch.com/investing/"+type+"/" + ticker + "/optionstable?optionMonth=" + month + "&optionYear=" + year + "&partial=true"
