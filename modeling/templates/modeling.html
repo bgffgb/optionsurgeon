@@ -155,7 +155,7 @@
         </a>
         <div class="card-body collapse show" id="portfolio">
             <h6 class="m-0 font-weight-bold text-primary" id="portfoliotext">Add Call/Put options from the below option chain to see
-            payout distribution, ROI and risk adjusted returns.</h6>
+            payout distribution, ROI and win probabilities.</h6>
             <div class="row" id="portfoliodiv">
                 <div class="col-md-3">
                   <div class="row m-2" style="display:block;">
@@ -200,8 +200,17 @@
            role="button" aria-expanded="true" aria-controls="callchaindiv">
             <h6 class="m-0 font-weight-bold text-primary">Call chain ({{ticker}} - {{expiry_picked}})</h6>
         </a>
+        <div class="card-header py-3">
+            <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
+              <i class="fas fa-sync"></i>
+              <h8 id="calltimestamp"> Last updated: {{datetime}}, New York time (15 minutes delayed) <h8>
+            </button>
+        </div>
         <div class="card-body collapse show" id="callchaindiv">
             <script>
+            var ticker = "{{ticker}}";
+            var ticker_type = "{{ticker_type}}";
+            var expiry = "{{expiry_picked}}";
             var callchain = {{call_chain}};
             var callqty = Array.apply(null, Array({{call_chain | length}})).map(Number.prototype.valueOf, 0);
             </script>
@@ -226,7 +235,7 @@
                 <tbody>
                 {% for row in call_chain %}
                 <tr>
-                    <td>
+                    <td style="padding:0.25rem; vertical-align:middle">
                         <button class="btn btn-primary" name="{{forloop.counter0}}" value="callinc">
                         <span class="icon text-white-50">
                         <i class="fas fa-plus"></i>
@@ -261,6 +270,12 @@
            role="button" aria-expanded="true" aria-controls="putchaindiv">
             <h6 class="m-0 font-weight-bold text-primary">Put chain ({{ticker}} - {{expiry_picked}})</h6>
         </a>
+        <div class="card-header py-3">
+            <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
+              <i class="fas fa-sync"></i>
+              <h8 id="puttimestamp"> Last updated: {{datetime}}, New York time (15 minutes delayed) <h8>
+            </button>
+        </div>
         <div class="card-body" id="putchaindiv">
             <script>
             var putchain = {{put_chain}};
@@ -287,7 +302,7 @@
                 <tbody>
                 {% for row in put_chain %}
                 <tr>
-                    <td>
+                    <td style="padding:0.25rem; vertical-align:middle">
                         <button class="btn btn-primary" name="{{forloop.counter0}}" value="putinc">
                         <span class="icon text-white-50">
                         <i class="fas fa-plus"></i>

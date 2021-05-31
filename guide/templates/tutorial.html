@@ -16,7 +16,7 @@
   <div class="row">
     <div class="col-lg-10 col-md-12 mx-auto align-items-center">
 
-      <h2 class="section-heading mb-4 mt-4">The idea</h2>
+      <h2 class="section-heading mb-4 mt-4 text-primary">The idea</h2>
 
       <p>The general recipe for an option trade is: you make a prediction on the future price movement, you formulate a plan and then execute it/manage your position. A sophisticated gambler.. 
       I mean investor.. also has some understanding of the likelihood of such events. Most of us look at the Greeks and deltas to eye-ball our decisions, but that's hardly scientific. Well this site 
@@ -26,7 +26,7 @@
       for shorting, total expected return, likelihood of being in the profit at expiry, etc. You get to mix and match options at will until you get the right strategy for the right situation, 
       making a better informed decision.</p>
 
-      <h2 class="section-heading mb-4 mt-4">The process</h2>
+      <h2 class="section-heading mb-4 mt-4 text-primary">The process</h2>
 
       <p>Modeling outcomes needs probabilities. This site calculates the Risk-Neutral Distribution already for you - the implied probabilities already priced in by the market. 
       More on this process <a href="rnd#rnd">here</a> for more science. That's our baseline, and it helps us visualize how the market sees the future of the underlying. 
@@ -44,12 +44,12 @@
         </div>
       </div>
 
-      <h2 class="section-heading mb-4 mt-4">An example</h2>
+      <h2 class="section-heading mb-4 mt-4 text-primary">An example</h2>
 
       <p>Here's a simple, long-term option play. I feel strongly about SPY going to grow over the next 2 years, trading at $420 today. While I can't be sure, I think a 10% growth by January 2023 is a very reasonable expectation, putting my price target at $450, with a 60% likelihood this will happen (my prediction). I will leave a 30% chance out there that it would stay stagnant, or even drop. 
       </p>
 
-      <h5 class="section-heading mb-2 mt-2">A) Picking the ticker and expiry</h5>
+      <h5 class="section-heading mb-2 mt-2 text-primary">A) Picking the ticker and expiry</h5>
 
       <div class="col d-flex align-items-center justify-content-center">
         <figure class="figure m-2">
@@ -58,7 +58,7 @@
         </figure>
       </div>
 
-      <h5 class="section-heading mb-2 mt-2">B) Adjusting the probabilities</h5>
+      <h5 class="section-heading mb-2 mt-2 text-primary">B) Adjusting the probabilities</h5>
 
       <p>In red, we have the Risk Neutral Distribution - the probability priced in by the market. My price target is $450 with 60%-ish probability, so I shifted the mean of the distribution to 
       reflect this. I also reduced the spread of the distribution, predicting less volatility than what the market is currently pricing in. The end result looks like this:</p>
@@ -69,7 +69,7 @@
         </figure>
       </div>
       
-      <h5 class="section-heading mb-2 mt-2">C) Taking a look at the option chain</h5>
+      <h5 class="section-heading mb-2 mt-2 text-primary">C) Taking a look at the option chain</h5>
 
       <p>Putting the price target higher makes buying (going long on) Calls very promising. Expected return percentages range form 60% on the $380 strike to 188% on the $510 strike. Risk adjusted 
       returns are also positive, but decreasing with the strike price. Buying $510 strike calls could be very profitable, lower capital requirement, but a low chance of success: it either wins big, 
@@ -92,7 +92,7 @@
         </figure>
       </div>
 
-      <h5 class="section-heading mb-2 mt-2">D) Building a strategy</h5>
+      <h5 class="section-heading mb-2 mt-2 text-primary">D) Building a strategy</h5>
 
       <p>Picking the right strategy is largely a matter of personal taste and risk tolerance.</p>
       <div class="col d-flex align-items-center justify-content-center mb-2">
@@ -123,7 +123,7 @@
       <p>The 62% probability of making money on this option trade might be too risky for some, or not risky enough for others. Selling a Put spread would have a higher win probability, 
          lower returns, buying OTM calls has lower win probability, higher returns. You do you!</p>
       <div class="col d-flex align-items-center justify-content-center">
-        <h2 class="section-heading mb-4 mt-4">That's it. You're ready. Go get'em tiger!</h2>
+        <h2 class="section-heading mb-4 mt-4 text-primary">That's it. You're ready. Go get'em tiger!</h2>
       </div>
 
     </div>

@@ -2,8 +2,10 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.template import RequestContext
 
+import datetime
 import json
 import logging
+import pytz
 
 from .options_expiry_scraper import scrape_option_dates, scrape_option_expiries
 from .options_price_scraper import scrape_option_prices
@@ -13,9 +15,22 @@ from .options import Option
 
 logger = logging.getLogger(__name__)
 
-STEPS = 22
+STEPS = 42
 #DISTRIB = 'MSGT'
 DISTRIB = 'F'
+
+month_map = {'Jan' : 'January', 'Feb' : 'February', 'Mar' : 'March',\
+                 'Apr' : 'April', 'May' : 'May', 'Jun' : 'June', \
+                 'Jul' : 'July', 'Aug' : 'August', 'Sep' : 'September', \
+                 'Oct' : 'October', 'Nov' : 'November', 'Dec' : 'December',
+}
+
+def get_date_time():
+    dto = datetime.datetime.utcnow()
+    dto=dto.replace(tzinfo=pytz.UTC)
+    dto_nyse=dto.astimezone(pytz.timezone("America/New_York"))
+    return dto_nyse.strftime("%d/%m/%Y %H:%M:%S")
+
 
 def option_from_array(type, arr):
     if type == 'CALL':
@@ -30,6 +45,10 @@ def format_float(val):
 
 
 def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special):
+    # Check if portfolio is empty
+    if min(callqty) == '0' and max(callqty) == '0' and min(putqty) == '0' and max(putqty) == '0':
+        return [], [], [], [], 0, 0, format_float(0.0)
+
     #Get all the strikes together
     strike_list = set()
     for i in range(len(callchain)):
@@ -112,6 +131,93 @@ def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putcha
     return chart, strike_returns, portfolio_label, portfolio_qty, expr, winp, format_float(totcost*100)
 
 
+def update_option_expectations(distr_modded, callchain, putchain, special):
+    #Update expectations for options
+    strikes, prob_array, _ = distr_modded.get_prob_arrays(th_lower=0.001, th_upper=0.001)
+    for arr in callchain:
+        o = option_from_array('CALL', arr)
+        exp, sharpe, r = o.evaluate(strikes, prob_array, special=special)
+        arr[6], arr[7] = exp / (o.get_premium()), sharpe
+
+    for arr in putchain:
+        o = option_from_array('PUT', arr)
+        exp, sharpe, _ = o.evaluate(strikes, prob_array, special=special)
+        arr[6], arr[7] = exp / (o.get_premium()), sharpe
+
+
+def sync(request):
+    """
+    Synchronize option chain, portfolio, charts, expectations
+    """
+    mean_level = int(request.POST.get('mean_level'))
+    var_level = int(request.POST.get('var_level'))
+    callqty = request.POST.getlist('callqty[]')
+    putqty = request.POST.getlist('putqty[]')
+    ticker = request.POST.get('ticker')
+    ticker_type = request.POST.get('ticker_type')
+    expiry = request.POST.get('expiry')
+    
+    month_day, year = expiry.split(',')
+    month, day = month_day.split(' ')
+    month = month_map[month]
+
+    # Refresh option table
+    options_chain = scrape_option_prices(ticker, month, year, expiry, ticker_type)
+    callchain = options_chain.get_call_table()
+    putchain = options_chain.get_put_table()
+    
+    # Fit distribution
+    distr = fit_distribution_F(options_chain)
+    distr.adjust_min_strike()
+    distr.adjust_max_strike()
+    distrib_params = distr.params
+
+    # Fit modded distribution
+    distr_modded = Distribution(DISTRIB, distrib_params)
+    distr_modded.set_mean_shift_level(mean_level)
+    distr_modded.set_var_shift_level(var_level)
+    distr_modded.adjust_min_strike()
+    distr_modded.adjust_max_strike()
+
+    # Take min/max over both
+    minv = min(distr.min_strike, distr_modded.min_strike)
+    maxv = max(distr.max_strike, distr_modded.max_strike)            
+    distr.min_strike, distr_modded.min_strike = minv, minv
+    distr.max_strike, distr_modded.max_strike = maxv, maxv
+
+    # Handle RND
+    special = False
+    if mean_level == 0 and var_level == 0:
+        special = True
+
+    #Update expectations for options
+    update_option_expectations(distr_modded, callchain, putchain, special=special)
+
+    # Get portfolio updates
+    portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special)
+
+    response = {
+        "callchain" : callchain,
+        "putchain" : putchain,
+        "chart" : distr.to_dict_array(steps=STEPS),
+        "chart_modded" : distr_modded.to_dict_array(steps=STEPS),
+        "portfoliochart" : portfoliochart,
+        "strikes" : strike_returns,
+        "portfolio_label" : portfolio_label,
+        "portfolio_qty" : portfolio_qty,
+        "expr" : expr,
+        "winp" : winp,
+        "totcost" : totcost,
+        "distrib_params" : distrib_params,
+        "datetime" : get_date_time()
+    }
+
+    # Logging
+    logger.info("Sync! Ticker: {} Expiry: {} Mean: {} Var: {} PfLabel: {} PfQty: {}".format(ticker, expiry, mean_level, var_level, portfolio_label, portfolio_qty))
+
+    return JsonResponse(response)
+
+
 def update_portfolio(request):
     distrib_params = request.POST.getlist('distrib_params[]')
     callchain = json.loads(request.POST.get('callchain'))
@@ -144,21 +250,13 @@ def update_portfolio(request):
         "winp" : winp,
         "totcost" : totcost
     }
+
+    # Logging
+    ticker = request.POST.get('ticker')
+    expiry = request.POST.get('expiry')
+    logger.info("Ticker: {} Expiry: {} Mean: {} Var: {} PfLabel: {} PfQty: {}".format(ticker, expiry, mean_level, var_level, portfolio_label, portfolio_qty))
+
     return JsonResponse(response)
-
-
-def update_option_expectations(distr_modded, callchain, putchain, special):
-    #Update expectations for options
-    strikes, prob_array, _ = distr_modded.get_prob_arrays(th_lower=0.001, th_upper=0.001)
-    for arr in callchain:
-        o = option_from_array('CALL', arr)
-        exp, sharpe, r = o.evaluate(strikes, prob_array, special=special)
-        arr[6], arr[7] = exp / (o.get_premium()), sharpe
-
-    for arr in putchain:
-        o = option_from_array('PUT', arr)
-        exp, sharpe, _ = o.evaluate(strikes, prob_array, special=special)
-        arr[6], arr[7] = exp / (o.get_premium()), sharpe
 
 
 def update_chart(request):
@@ -174,6 +272,7 @@ def update_chart(request):
     distr = Distribution(DISTRIB, distrib_params)
     distr.adjust_min_strike()
     distr.adjust_max_strike()
+
     distr_modded = Distribution(DISTRIB, distrib_params)
     distr_modded.set_mean_shift_level(mean_level)
     distr_modded.set_var_shift_level(var_level)
@@ -212,6 +311,11 @@ def update_chart(request):
     response["winp"] = winp
     response["totcost"] = totcost
 
+    # Logging
+    ticker = request.POST.get('ticker')
+    expiry = request.POST.get('expiry')
+    logger.info("Ticker: {} Expiry: {} Mean: {} Var: {} PfLabel: {} PfQty: {}".format(ticker, expiry, mean_level, var_level, portfolio_label, portfolio_qty))
+
     return JsonResponse(response)
 
 
@@ -230,6 +334,9 @@ def modeling(request):
             modeling_context['ticker'] = ticker
             modeling_context['dates'] = date_list
 
+            # Logging
+            logger.info("Picked Ticker! Ticker: {}".format(ticker))
+
         # User picked a date
         elif 'new_date' in request.POST:
             date_str = request.POST.get('new_date')
@@ -245,6 +352,9 @@ def modeling(request):
             month, year = date_str.split(' ')            
             expiries = scrape_option_expiries(ticker, month, year, ticker_type)
             modeling_context['expiries'] = expiries
+
+            # Logging
+            logger.info("Picked Date! Ticker: {} Date: {}".format(ticker, date_str))
 
         # User picked an expiry
         elif 'new_expiry' in request.POST:
@@ -264,7 +374,7 @@ def modeling(request):
             month, year = date_str.split(' ')
             options_chain = scrape_option_prices(ticker, month, year, expiry_picked, ticker_type)
             call_table = options_chain.get_call_table()
-            put_table = options_chain.get_put_table()            
+            put_table = options_chain.get_put_table()          
 
             # Fit distribution
             distr = fit_distribution_F(options_chain)
@@ -278,6 +388,10 @@ def modeling(request):
             modeling_context['distrib_params'] = distr.params
             modeling_context['mean_level'] = 0
             modeling_context['var_level'] = 0
+            modeling_context['datetime'] = get_date_time()
+
+            # Logging
+            logger.info("Picked Expiry! Ticker: {} Expiry: {}".format(ticker, expiry_picked))
     
     # Always render the same page
     return render(request, 'modeling.html', modeling_context)

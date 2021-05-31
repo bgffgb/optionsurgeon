@@ -33,6 +33,46 @@ $(document).ready(function() {
 
   $("button").click(function(e) {
     var bval = $(this).val();
+    if (bval === "sync") {
+      e.preventDefault();
+      $.ajax({
+        type: "POST",
+        url: "sync",
+        data: {
+            "ticker": ticker,
+            "ticker_type": ticker_type,
+            "expiry": expiry,
+            "callqty" : callqty,
+            "putqty" : putqty,
+            "mean_level" : mean_level,
+            "var_level" : var_level,
+        },
+        success: function(result) {
+            callchain = result["callchain"];
+            putchain = result["putchain"];
+
+            rnd_data = result["chart"];
+            rnd_modded = result["chart_modded"];          
+            render_rnd_charts();
+            update_tables();
+            update_timestamp(result["datetime"]);
+
+            portfolio_data = result["portfoliochart"];
+            portfolio_strikes = result["strikes"];
+            portfolio_label = result["portfolio_label"];
+            portfolio_qty = result["portfolio_qty"];
+            expr = result["expr"];
+            winp = result["winp"];
+            totcost = result["totcost"];
+            chart = portfolio_data;
+            strikes = portfolio_strikes;
+            update_portfolio(portfolio_qty, portfolio_label, expr, winp, totcost);
+        },
+        error: function(result) {
+            console.log('Uh Oh. Chart update error:', result);
+        }
+      });
+    }
     if (bval === "toggle") {
       e.preventDefault();
       if (last_mode === "E") {
@@ -62,6 +102,8 @@ $(document).ready(function() {
         type: "POST",
         url: "update_chart",
         data: {
+            "ticker": ticker,
+            "expiry": expiry,
             "callchain" : JSON.stringify(callchain),
             "putchain" : JSON.stringify(putchain),
             "callqty" : callqty,
@@ -77,9 +119,6 @@ $(document).ready(function() {
             putchain = result["putchain"];
             render_rnd_charts();
             update_tables();
-
-  console.log(rnd_data);
-  console.log(rnd_modded);
 
             portfolio_data = result["portfoliochart"];
             portfolio_strikes = result["strikes"];
@@ -123,6 +162,8 @@ $(document).ready(function() {
         type: "POST",
         url: "update_portfolio",
         data: {
+            "ticker": ticker,
+            "expiry": expiry,
             "callchain" : JSON.stringify(callchain),
             "putchain" : JSON.stringify(putchain),
             "callqty" : callqty,
@@ -150,6 +191,22 @@ $(document).ready(function() {
 
   render_rnd_charts();
 });
+
+function highlight(obj){
+   var orig = obj.style.backgroundColor;
+   obj.style.backgroundColor = "gray";
+   setTimeout(function(){
+        obj.style.backgroundColor = orig;
+   }, 1000);
+}
+
+function update_timestamp(datetime) {
+  new_text = "Last updated: " + datetime + ", New York time (15 minutes delayed)"
+  label = document.getElementById("calltimestamp");
+  label.textContent = new_text;
+  label = document.getElementById("puttimestamp");
+  label.textContent = new_text;
+}
 
 function update_portfolio(qty, label, expr, winp, totcost) {
   portfoliodiv = document.getElementById("portfoliodiv");
@@ -194,6 +251,10 @@ function trim_sharpe(val){
 function update_tables() {
   call_table = document.getElementById("calltable");
   for(let i = 0; i < callchain.length; i++){
+    for (let j=0; j<5; j++){
+      cell = call_table.rows[i + 1].cells[j + 2];
+      cell.innerHTML = callchain[i][j].toFixed(2);
+    }    
     expected = call_table.rows[i + 1].cells[7];
     expected.innerHTML = callchain[i][6].toFixed(2)+"%";
     sharpe = call_table.rows[i + 1].cells[8];
@@ -208,6 +269,10 @@ function update_tables() {
   }
   put_table = document.getElementById("puttable");  
   for(let i = 0; i < putchain.length; i++){
+    for (let j=0; j<5; j++){
+      cell = call_table.rows[i + 1].cells[j + 2];
+      cell.innerHTML = putchain[i][j].toFixed(2);
+    }
     expected = put_table.rows[i + 1].cells[7];
     expected.innerHTML = putchain[i][6].toFixed(2)+"%";
     sharpe = put_table.rows[i + 1].cells[8];    

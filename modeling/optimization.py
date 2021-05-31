@@ -47,7 +47,6 @@ def add_put_bull_spreads(sorted_put_strikes, options_dict_puts, strikes, probs, 
                 implied_prob = 0
             if implied_prob > 1:
                 implied_prob = 1
-            #print(mid_strike, implied_prob, bullspread_premium)
             strikes.append(mid_strike)
             probs.append(implied_prob)
     return strikes, probs
@@ -97,7 +96,7 @@ def fit_distribution_MSGT(options: OptionChain):
     tic = time.time()
     res = minimize(fit_MSGT, start, method = 'Nelder-Mead', args=(strikes, probs), options={'maxiter' : 3000})
     toc = time.time()
-    logger.info("Optimization: error {} res {} time {}".format(res.fun, res.x, toc-tic))
+    logger.info("Optimization MSGT: error {} res {} time {}".format(res.fun, res.x, toc-tic))
     
     return Distribution("MSGT", res.x)
 
@@ -171,7 +170,10 @@ def fit_distribution_F(options: OptionChain):
     strikes, probs = add_call_bull_spreads(sorted_call_strikes, options_dict_calls, strikes, probs, D)
     strikes, probs = add_put_bull_spreads(sorted_put_strikes, options_dict_puts, strikes, probs, D)
 
+    tic = time.time()
     popt, _ = curve_fit(curve_fit_optim, strikes, probs)
+    toc = time.time()
+    logger.info("Optimization F: res {} time {}".format(popt, toc-tic))
 
     return Distribution('F', popt)
 

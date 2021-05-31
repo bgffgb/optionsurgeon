@@ -7,7 +7,7 @@
 <div class="row">
 <div class="col-lg-10 col-md-12 mx-auto align-items-center">
 
-<h2 class="section-heading mb-4 mt-4">Option Pricing</h2>
+<h2 class="section-heading mb-4 mt-4 text-primary">Option Pricing</h2>
 
 <p> Having a bit of understanding of option pricing helps clear up why buying/selling options can be profitable. The short version is, option prices are set by <a href="https://en.wikipedia.org/wiki/Market_maker">market makers<a>. These are institutions providing liquidity by two-sided markets (willing to both sell and buy) during exchange hours. In return, they have some special privileges: reduced trading fees, ability to naked short, etc. Market makers don't speculate on the future price of the underlying asset - rather, they maintain a risk neutral position, making a small percentage on every option contract filled, whether the price goes up, down or flatlines.
 </p>
@@ -17,7 +17,7 @@
 <p>I highly recommend <a href="https://www.youtube.com/watch?v=ryq_TjCmhx0">Warren Buffet's take on Black Scholes<a>, it does a great job pointing out the weaknesses in mechanical option pricing. It is a "know-nothing affair" - so as long as you have better understanding of the fundamentals, future growth or potential catastrophic downfall of an underlying asset, you can find mispriced options. Unlike market makers, you have the option to pick and choose which positions to enter; market makers might be pricing options correctly 99% of the time, but you get to choose your trades, waiting for that 1% of opportunity.
 <p>
 
-<h2 class="section-heading mb-4 mt-4" id="rnd">Option-Implied Risk-Neutral Distribution (RND)</h2>
+<h2 class="section-heading mb-4 mt-4 text-primary" id="rnd">Option-Implied Risk-Neutral Distribution (RND)</h2>
 
 <p>
 Option prices are already pricing in potential future price movements. If you take all the Call and Put option prices across all strikes for a given expiration date and turn it into a <a href="https://www.cfainstitute.org/-/media/documents/book/rf-publication/2004/rf-v2004-n1-3925-pdf.ashx">PhD worthy math problem<a>, you can get back the priced in probability distribution of the underlying reaching certain strikes by expiry. It's called the Option-Implied Risk-Neutral Distribution (RND) and is pretty good baseline most of the time.
@@ -30,7 +30,7 @@ Option prices are already pricing in potential future price movements. If you ta
 </figure>
 </div>
 
-<h2 class="section-heading mb-4 mt-4">RND estimation in practice</h2>
+<h2 class="section-heading mb-4 mt-4 text-primary">RND estimation in practice</h2>
 
 <p> So how do you get this distribution? If you went through the math, you'll know it's a pretty heavy non-linear optimization problem with no closed-form solution. You unfortunately can't solve it in real-time from an option chain, and most people (like me) are not willing to wait several minutes for the computations to run. So I implemented a decent approximation instead. The method I am applying here estimates probabilities from constructing Call and Put spreads with strike prices close to each other. This gives an estimation of the cumulative distribution function: </p>
 
@@ -62,12 +62,12 @@ Option prices are already pricing in potential future price movements. If you ta
 </figure>
 </div>
 
-<h2 class="section-heading mb-4 mt-4" id="limits">Limitations</h2>
+<h2 class="section-heading mb-4 mt-4 text-primary" id="limits">Limitations</h2>
 
 <p> <ul>
-<li> The 'fair' price of an option is the middle point between the Bid and Ask prices; in reality, the 'fair' price is probably closer to the Bid price, favoring option sellers. This bias is somewhat reduced by using Call/Put spreads to estimate probabilities, but it still is a source of imprecision, especially with wide Bid/Ask spreads</li>
+<li> The 'fair' price of an option is assumed to be the middle point between the Bid and Ask prices; in practice, the 'fair' price is probably closer to the Bid price, favoring option sellers. This bias is somewhat reduced by using Call/Put spreads to estimate probabilities, but it still is a source of imprecision, especially with wide Bid/Ask spreads</li>
 <li> Later dated option expiries carry more uncertainty and have generally higher Bid/Ask spreads; RND estimates tend to be less accurate in those cases </li>
-<li> Sometimes options are just priced weirdly; Bid/Ask spreads can be crazy wide and pricing terribly inconsistent; I present to you one such curiosity, GME January 2023 expiry distribution:</li>
+<li> Sometimes options are just priced weirdly; Bid/Ask spreads can be crazy wide and pricing terribly inconsistent; I present to you one such anomaly, GME January 2023 expiry distribution:</li>
 </ul></p>
 
 <div class="col d-flex align-items-center justify-content-center">
@@ -91,18 +91,10 @@ Option prices are already pricing in potential future price movements. If you ta
 <div class="card shadow mb-4 bg-gradient-warning">
 <div class="card-header py-3 bg-gradient-warning">
   <h6 class="m-0 font-weight-bold text-white">
-    You cannot base your investment decisions on the expectation estimates given by the fitted RND estimate; the RND is just a simple indicator, a starting point to visualize (roughly) the priced in probabilities, not a magical shortcut to easy trades.
+    TL;DR: You cannot base your investment decisions on the expectation estimates given by the fitted RND estimate; RND derived probabilities is just a simple indicator, a starting point to visualize (roughly) the priced in probabilities, not a magical shortcut to easy trades. Make your trading decisions accordingly!
   </h6>
 </div>
 </div>
-
-
-<h2 class="section-heading mb-4 mt-4">Raison d'être</h2>
-<p>Understanding option pricing is a very math & statistics heavy undertaking, yet most retail investors struggle with even the basic concepts. For long term success, option traders need to get both the future price and the timing right. All that in real time. Getting to pick from thousands of combinations of strikes and expiration dates. Is a 140/160 Put Spread better than a 150/170 one? How much more likely is one to be profitable than the other? How much of your buying power do they require? Which one has a higher risk adjusted expectation? 
-</p>
-<p>
-I started coding up my own tools to help me with option trading/strategy picking/risk management. Then there was this pandemic thing, a lot more indoor time, so I figured f*ck it, I'll turn it into a website, picking up some new skills on the way.
-</p>
 
 </div>
 </div>
