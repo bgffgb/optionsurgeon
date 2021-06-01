@@ -4,12 +4,12 @@
 {% block page_content %}
 
 <div class="container">
-<div class="row">
+<div class="row text-justify">
 <div class="col-lg-10 col-md-12 mx-auto align-items-center">
 
 <h2 class="section-heading mb-4 mt-4 text-primary">Option Pricing</h2>
 
-<p> Having a bit of understanding of option pricing helps clear up why buying/selling options can be profitable. The short version is, option prices are set by <a href="https://en.wikipedia.org/wiki/Market_maker">market makers<a>. These are institutions providing liquidity by two-sided markets (willing to both sell and buy) during exchange hours. In return, they have some special privileges: reduced trading fees, ability to naked short, etc. Market makers don't speculate on the future price of the underlying asset - rather, they maintain a risk neutral position, making a small percentage on every option contract filled, whether the price goes up, down or flatlines.
+<p> Having some understanding of option pricing can help with buying/selling options. The short version is, option prices are set by <a href="https://en.wikipedia.org/wiki/Market_maker">market makers<a>. These are institutions providing liquidity in two-sided markets (willing to both sell and buy) during exchange hours. In return, they have some special privileges: reduced trading fees, ability to naked short, etc. Market makers don't speculate on the future price of the underlying asset - rather, they maintain a risk neutral position, making a small percentage on every option contract filled, whether the price goes up, down or flatlines.
 </p>
 
 <p> This option pricing is a mechanical system, following some option pricing model like <a href="https://www.investopedia.com/terms/b/blackscholes.asp">Black-Scholes<a> or <a href="http://www.ericbenhamou.net/documents/articles/OptionLevy.pdf">Levy distribution<a>, done in real-time. Most of these models assume A) the asset price will stay stable in the future, be it over the next week or year B) predict the potential magnitude of price movements based on historical price volatilty.</p>
@@ -32,7 +32,7 @@ Option prices are already pricing in potential future price movements. If you ta
 
 <h2 class="section-heading mb-4 mt-4 text-primary">RND estimation in practice</h2>
 
-<p> So how do you get this distribution? If you went through the math, you'll know it's a pretty heavy non-linear optimization problem with no closed-form solution. You unfortunately can't solve it in real-time from an option chain, and most people (like me) are not willing to wait several minutes for the computations to run. So I implemented a decent approximation instead. The method I am applying here estimates probabilities from constructing Call and Put spreads with strike prices close to each other. This gives an estimation of the cumulative distribution function: </p>
+<p> So how do you get this distribution? If you had a look at the math, you'll know it's a pretty heavy non-linear optimization problem with no closed-form solution. You unfortunately can't solve it in real-time from an option chain, and most people (like me) are not willing to wait several minutes for the computations to finish - assuming you managed to implement the aglorithm yourself in the first place. So I implemented a decent approximation instead. The method I am applying here estimates probabilities from constructing Call and Put spreads with strike prices close to each other. This gives an estimation of the cumulative distribution function, with each blue dot representing the implied probability by a Call or Put spread: </p>
 
 <div class="col d-flex align-items-center justify-content-center">
 <figure class="figure mt-2 mb-4">
@@ -65,8 +65,8 @@ Option prices are already pricing in potential future price movements. If you ta
 <h2 class="section-heading mb-4 mt-4 text-primary" id="limits">Limitations</h2>
 
 <p> <ul>
-<li> The 'fair' price of an option is assumed to be the middle point between the Bid and Ask prices; in practice, the 'fair' price is probably closer to the Bid price, favoring option sellers. This bias is somewhat reduced by using Call/Put spreads to estimate probabilities, but it still is a source of imprecision, especially with wide Bid/Ask spreads</li>
-<li> Later dated option expiries carry more uncertainty and have generally higher Bid/Ask spreads; RND estimates tend to be less accurate in those cases </li>
+<li> The 'fair' price of an option is assumed to be the middle point between the Bid and Ask prices; in practice, the 'fair' price is probably closer to the Bid price, favoring option sellers. This bias is somewhat reduced by using Call/Put spreads to estimate probabilities, but it still is a source of imprecision, especially with wide Bid/Ask spreads;</li>
+<li> Later dated option expiries carry more uncertainty and have generally higher Bid/Ask spreads; RND estimates tend to be less accurate in those cases;</li>
 <li> Sometimes options are just priced weirdly; Bid/Ask spreads can be crazy wide and pricing terribly inconsistent; I present to you one such anomaly, GME January 2023 expiry distribution:</li>
 </ul></p>
 
@@ -77,7 +77,7 @@ Option prices are already pricing in potential future price movements. If you ta
 </figure>
 </div>
 
-<p> For all these reasons mentioned above, the fitted RND might seemingly promise great returns on some options. Obviously, you cannot trust it. It can be due to fitting errors, or options are just priced particularly unfavorably. Case in point, here is ae the expected returns from GME class for January 2023 expiry:<p>
+<p> For all these reasons mentioned above, the fitted RND might seemingly promise great returns on some options. Obviously, you cannot trust it. It can be due to fitting errors, or options are just priced particularly unfavorably. Case in point, here are the expected returns for GME calls for January 2023 expiry:<p>
 
 <div class="col d-flex align-items-center justify-content-center">
 <figure class="figure m-2">
@@ -86,12 +86,12 @@ Option prices are already pricing in potential future price movements. If you ta
 </figure>
 </div>
 
-<p>It would seem selling calls is rather favorable, but this is just a guess by a badly fitted model, not reliable investment advice. If you look at the cumulative distribution funciton from the previous figure, it should be clear why. The data is extremely noisy, there isn't a single, unique distribution that gives a perfect fit over that set of data points. If the fitted RND models would be perfect, all expectations across all puts and calls would be 0.</p>
+<p>It would seem selling calls is rather favorable, but this is just a guess by a badly fitted model, not reliable investment advice. If you look at the cumulative distribution funciton from the previous figure, it should be clear why: the data is extremely noisy, there isn't a single, unique distribution that gives a perfect fit over that set of data points. If the fitted RND models would be perfect, all expectations across all puts and calls would be 0.</p>
 
 <div class="card shadow mb-4 bg-gradient-warning">
 <div class="card-header py-3 bg-gradient-warning">
   <h6 class="m-0 font-weight-bold text-white">
-    TL;DR: You cannot base your investment decisions on the expectation estimates given by the fitted RND estimate; RND derived probabilities is just a simple indicator, a starting point to visualize (roughly) the priced in probabilities, not a magical shortcut to easy trades. Make your trading decisions accordingly!
+    TL;DR: You cannot base your investment decisions on the expectation estimates given by the fitted RND; RND derived probabilities is just an indicator, a starting point to visualize (roughly) the priced in probabilities, not a magical shortcut to easy trades. Make your trading decisions accordingly!
   </h6>
 </div>
 </div>

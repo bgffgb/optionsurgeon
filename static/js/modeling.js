@@ -251,8 +251,8 @@ function trim_sharpe(val){
 function update_tables() {
   call_table = document.getElementById("calltable");
   for(let i = 0; i < callchain.length; i++){
-    for (let j=0; j<5; j++){
-      cell = call_table.rows[i + 1].cells[j + 2];
+    for (let j=0; j<6; j++){
+      cell = call_table.rows[i + 1].cells[j + 1];
       cell.innerHTML = callchain[i][j].toFixed(2);
     }    
     expected = call_table.rows[i + 1].cells[7];
@@ -269,8 +269,8 @@ function update_tables() {
   }
   put_table = document.getElementById("puttable");  
   for(let i = 0; i < putchain.length; i++){
-    for (let j=0; j<5; j++){
-      cell = call_table.rows[i + 1].cells[j + 2];
+    for (let j=0; j<6; j++){
+      cell = put_table.rows[i + 1].cells[j + 1];
       cell.innerHTML = putchain[i][j].toFixed(2);
     }
     expected = put_table.rows[i + 1].cells[7];
