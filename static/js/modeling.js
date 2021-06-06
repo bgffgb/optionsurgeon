@@ -520,17 +520,24 @@ function render_rnd_charts() {
     const currentXPosition = d3.mouse(this)[0];
     const xValue = x.invert(currentXPosition);
     const dataIndex = bisectX(data, xValue, 1);
-    const leftData = data[dataIndex - 1];
+    const leftData = data[0];
     const rightData = data[dataIndex];
+    subrndp = 0;
+    subrndmodp = 0;
+    for (let j=0; j<dataIndex; j++){
+      subrndp += parseFloat(rnd_data[j].c);
+      subrndmodp += parseFloat(rnd_modded[j].c);
+    }
     const x1Percentage = x(leftData.x) / width * 100;
     const x2Percentage = x(rightData.x) / width * 100;
     d3.selectAll(".start").attr("offset", `${x1Percentage}%`);
     d3.selectAll(".end").attr("offset", `${x2Percentage}%`);
 
     tooltip
-      .html("RND "+rnd_data[dataIndex-1].c+"%<br>Predicted "+rnd_modded[dataIndex-1].c+"%")
+      .html("RND "+subrndp.toFixed(2)+"%<br>Predicted "+subrndmodp.toFixed(2)+"%")
       .style("left", (d3.event.pageX + 20) + "px")
       .style("top", (d3.event.pageY) + "px")
+      .style("color", "#273746")
   }
 
   function handleMouseOut() {

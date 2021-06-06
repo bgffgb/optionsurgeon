@@ -15,11 +15,10 @@
   <div class="row text-justify">
     <div class="col-lg-10 col-md-12 mx-auto align-items-center">
 
-      <h2 class="section-heading mb-4 mt-4 text-primary">The idea</h2>
+      <h2 class="section-heading mb-4 mt-4 text-primary">How to trade</h2>
 
       <p>The general recipe for an option trade is: you make a prediction on the future price movement, you formulate a plan and then execute it/manage your position. A sophisticated gambler.. 
-      I mean investor.. also has some understanding of the likelihood of such events. Most of us look at the Greeks and deltas to eye-ball our decisions, but that's hardly scientific. Well this site 
-      is here to add some more mathematical rigour to the process.</p>
+      I mean investor.. also has some understanding of the likelihood of such events. Most of us look at the Greeks and deltas to eye-ball our decisions, but that's hardly scientific. Well this option calculator is here to add some more mathematical rigour to the process.</p>
 
       <p>The idea is simple: you pick a ticker and expiration, you plug in a probability distribution and this website gives you which options are good for going long, which ones are good 
       for shorting, total expected return, likelihood of being in the profit at expiry, etc. You get to mix and match options at will until you get the right strategy at the right cost you are 
@@ -52,7 +51,7 @@
 
       <div class="col d-flex align-items-center justify-content-center">
         <figure class="figure m-2">
-          <img class="img-fluid" src="{% static 'img/pick.png' %}" alt="Picking!">
+          <img class="img-fluid" src="{% static 'img/pick.png' %}" alt="Picking!" loading="lazy">
           <figcaption class="figure-caption text-center">Picking SPY, January 20, 2023 expiry</figcaption>
         </figure>
       </div>
@@ -62,7 +61,7 @@
       <p>In red, you have the Risk Neutral Distribution - the probabilities priced in by the market. In blue, my price target estimate of $450 with 60%-ish probability; I shifted the mean of the distribution to reflect this. I also reduced the spread of the distribution, predicting less volatility than what the market is currently pricing in. The end result looks like this:</p>
       <div class="col d-flex align-items-center justify-content-center">
         <figure class="figure m-2">
-          <img class="img-fluid" src="{% static 'img/distr.png' %}" alt="Probability Modeling">
+          <img class="img-fluid" src="{% static 'img/distr.png' %}" alt="Probability Modeling" loading="lazy">
           <figcaption class="figure-caption text-center">Risk Neutral Distribution (priced in) vs Predicted Distribution</figcaption>
         </figure>
       </div>
@@ -77,7 +76,7 @@
       </p>
       <div class="col d-flex align-items-center justify-content-center">
         <figure class="figure m-2">
-          <img class="img-fluid" src="{% static 'img/calls.png' %}" alt="SPY 2023 Call chain snippet">
+          <img class="img-fluid" src="{% static 'img/calls.png' %}" alt="SPY 2023 Call chain snippet" loading="lazy">
           <figcaption class="figure-caption text-center">SPY 2023 Call chain snippet</figcaption>
         </figure>
       </div>
@@ -87,7 +86,7 @@
       </p>
       <div class="col d-flex align-items-center justify-content-center">
         <figure class="figure m-2">
-          <img class="img-fluid" src="{% static 'img/puts.png' %}" alt="SPY 2023 Put chain snippet">
+          <img class="img-fluid" src="{% static 'img/puts.png' %}" alt="SPY 2023 Put chain snippet" loading="lazy">
           <figcaption class="figure-caption text-center">SPY 2023 Put chain snippet</figcaption>
         </figure>
       </div>
@@ -96,7 +95,7 @@
 
       <p>Picking the right strategy is largely a matter of personal taste and risk tolerance.</p>
       <div class="col d-flex align-items-center justify-content-center mb-2">
-        <video autoplay="" muted="" name="media" loop="">
+        <video autoplay="" muted="" name="media" loop="" loading="lazy">
           <source src="https://snipcart.com/media/204378/decisions.webm" type="video/webm">
         </video>
       </div>
@@ -106,7 +105,7 @@
       </p>
       <div class="col d-flex align-items-center justify-content-center">
         <figure class="figure m-2">
-          <img class="img-fluid" src="{% static 'img/strat1.png' %}" alt="Return profile by strike">
+          <img class="img-fluid" src="{% static 'img/strat1.png' %}" alt="Return profile by strike" loading="lazy">
           <figcaption class="figure-caption text-center">Return by strike</figcaption>
         </figure>
       </div>
@@ -116,7 +115,7 @@
       <p>Or when adjusted for the likelihood of the outcomes (multiplying the returns with the probability distribution), the return profile of this option strategy looks like this:</p>
       <div class="col d-flex align-items-center justify-content-center">
         <figure class="figure m-2">
-          <img class="img-fluid" src="{% static 'img/strat2.png' %}" alt="Return profile by strike">
+          <img class="img-fluid" src="{% static 'img/strat2.png' %}" alt="Return profile by strike" loading="lazy">
           <figcaption class="figure-caption text-center">Return by strike, adjusted for likelihood</figcaption>
         </figure>
       </div>

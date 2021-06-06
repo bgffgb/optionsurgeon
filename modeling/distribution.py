@@ -180,6 +180,9 @@ class Distribution:
     def to_dict_array(self, steps=None):
         strikes, prob_array, cum_array = self.get_prob_arrays(steps=steps, strike_min=self.min_strike, strike_max=self.max_strike)
         probs = []
+        difi = (1 - sum(cum_array)) / 2
+        cum_array[0] += difi
+        cum_array[-1] += difi
         for (strike, prob, cum) in zip(strikes, prob_array, cum_array):
-            probs.append({'x' : strike, 'y' : prob, 'c' : "{:.2f}".format(cum * 100)})
+            probs.append({'x' : strike, 'y' : prob, 'c' : cum * 100})
         return probs

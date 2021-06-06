@@ -8,22 +8,21 @@
 <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 <link href="{% static 'vendor/fontawesome-free/css/all.min.css' %}" rel="stylesheet">
 <link href="{% static 'css/sb-admin-2.css' %}" rel="stylesheet">
-
+<header>
+<title>Option Sniper</title>
+</header>
 <body id="page-top">
 
 <div>
-<nav class="navbar navbar-expand-lg navbar-light bg-light topbar mb-4 static-top shadow">
-    <div class="container">
-
-        <a class="sidebar-brand d-flex align-items-center justify-content-center" href="tutorial">
-        <div class="sidebar-brand-icon">
-            <i class="fas fa-bullseye"></i>
+<div class="container">
+  <nav class="navbar navbar-expand-lg navbar-light topbar mb-4 static-top shadow justify-content-right bg-gradient-light" style="background-color: #e3f2fd;">
+        <div class="d-flex align-items-center justify-content-left text-primary pt-4 pb-4">
+            <div class="m-2 mb-0"><i class="fa fa-2x fa-bullseye"></i></div>
+            <div><h1 class="smb-0"> Option Snipe</h1></div>
+          <!-- <div class="pl-4"><h8>Option calculator, but on steroids.</h8></div> -->
         </div>
-        <div class="sidebar-brand-text mx-3">Option Snipe</div>
-        </a>
-
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
+        <div class="row collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto">
             <li class="nav-item active">
               <a class="nav-link text-secondary" href="modeling">Modeling</a>
             </li>
@@ -38,8 +37,8 @@
             </li>
           </ul>
         </div>
-    </div>
-</nav>
+  </nav>
+</div>
 
 <div class="container">
     {% block page_content %}{% endblock %}
