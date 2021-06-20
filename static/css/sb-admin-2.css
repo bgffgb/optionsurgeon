@@ -10251,7 +10251,7 @@ a:focus {
     right: 0;
   }
   .topbar .dropdown-list {
-    width: 20rem !important;
+    max-width: 20rem !important;
   }
   .topbar .dropdown-list .dropdown-item .text-truncate {
     max-width: 13.375rem;

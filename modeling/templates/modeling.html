@@ -9,79 +9,55 @@
 <div class="card shadow mb-4 bg-gradient-warning">
   <div class="card-header py-3 bg-gradient-info">
     <h6 class="m-0 font-weight-bold text-white">
-    <a class="text-white" href="tutorial">First time around? Click here for a tutorial.<a>
+    <a class="text-white" href="guide">First time around? Click here for a guide.<a>
     </h6>
   </div>
 </div>
-<form action="modeling" method="POST">
-{% csrf_token %}
+
 <div class="container-fluid">
-    <div class="card shadow mb-4 border-bottom-primary">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Select a ticker</h6>
+  <form action="modeling" method="POST">
+  {% csrf_token %}
+  <nav class="navbar navbar-expand navbar-light bg-white topbar static-top shadow">
+    <div class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+      <!-- Ticker search bar -->
+      <div class="input-group">
+        <label class="font-weight-bold text-primary pr-2">Ticker:</label>
+        <input type="text" class="form-control bg-light border-0" value="{{ticker}}"
+            aria-label="Search" aria-describedby="basic-addon2" name="new_ticker" style="text-transform:uppercase">
+        <div class="input-group-append">
+          <button class="btn btn-primary" name="submit_ticker" type="submit">
+            <i class="fas fa-search fa-sm"></i>
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="card-body">
-        <div>
-            <div class="input-group">
-                <input type="text" class="form-control bg-light border-0" placeholder="Search ticker, ie: SPY"
-                aria-label="Search" aria-describedby="basic-addon2" name="new_ticker" style="text-transform:uppercase">
-                <div class="input-group-append">
-                    <button class="btn btn-primary" name="submit_ticker" type="submit">
-                        <i class="fas fa-search fa-sm"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        {% if empty_ticker %}
-        <div class="alert-warning">
-            <p> Oi, mate! Search field is empty! </p>
-        </div>
-        {% endif %}
-        {% if bad_ticker %}
-        <div class="alert-warning">
-           <p> Oi, mate! Can't find ticker {{bad_ticker}}! </p>
-        </div>
-        {% endif %}
-        </div>
+  
+    {% if empty_ticker %}
+    <div class="alert-warning">
+      <p> Oi, mate! Search field is empty! </p>
     </div>
-
-    {% if dates %}
-    <div class="card shadow mb-4 border-bottom-primary">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Pick an options expiration date for {{ticker}}</h6>
-        </div>
-        <div class="card-body">
-            <input type="hidden" name="ticker" value ="{{ticker}}">
-            <input type="hidden" name="ticker_type" value ="{{ticker_type}}">
-            {% for date in dates %}
-                <input type="hidden" name="date_array" value ="{{date}}">
-                {% ifequal date date_picked %}
-                    <button class="btn btn-primary" name="new_date" type="submit" value="{{date}}"> {{date}} </button>
-                {% else %}
-                    <button class="btn btn-outline-primary" name="new_date" type="submit" value="{{date}}"> {{date}} </button>
-                {% endifequal %}
-            {% endfor %}
-
-            {% if expiries %}
-            <h6 class="m-2 font-weight-bold text-primary mb-2"> Pick an expiration </h6>
-            <input type="hidden" name="date_picked" value ="{{date_picked}}">
-            <input type="hidden" name="expiry_picked" value ="{{expiry_picked}}">
-
-            {% for expiry in expiries %}
-                <input type="hidden" name="expiry_array" value ="{{expiry}}">
-                {% ifequal expiry expiry_picked %}
-                    <button class="btn btn-primary" name="new_expiry" type="submit" value="{{expiry}}"> {{expiry}} </button>
-                {% else %}
-                    <button class="btn btn-outline-primary" name="new_expiry" type="submit" value="{{expiry}}"> {{expiry}} </button>
-                {% endifequal %}
-            {% endfor %}
-        {% endif %}
-        </div>
+    {% endif %}
+    {% if bad_ticker %}
+    <div class="alert-warning">
+      <p> Oi, mate! Can't find ticker {{bad_ticker}}! </p>
     </div>
     {% endif %}
 
-    {% if chart %}
-    <div class="card shadow mb-4 border-bottom-primary">
+    <!-- Expiry picker -->
+    {% if expiry_picked %}
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item dropdown no-arrow mx-1">
+        <div id="expiries">
+        {% include "expiries.html"%}
+        </div>
+      </li>
+    </ul>
+    {% endif %}
+  </nav>
+  </form>
+
+  {% if chart %}
+  <div class="card shadow">
         <script>
         var mean_level = {{mean_level | escapejs}};
         var var_level = {{var_level | escapejs}};
@@ -89,7 +65,10 @@
         </script>
 
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Expected distribution for {{ticker}} ({{expiry_picked}})</h6>
+            <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
+              <i class="fas fa-sync"></i>
+              <h8 id="toptimestamp"> SPY ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
+            </button>
         </div>
 
         <div class="card-body">
@@ -148,7 +127,7 @@
     {% endif %}
 
     {% if chart %}
-    <div class="card shadow mb-4 border-bottom-primary">
+    <div class="card shadow">
         <a href="#portfolio" class="card-header py-3" data-toggle="collapse" 
            role="button" aria-expanded="true" aria-controls="portfolio">
             <h6 class="m-0 font-weight-bold text-primary">Option picks</h6>
@@ -195,7 +174,7 @@
     {% endif %}
 
     {% if call_chain %}
-    <div class="card shadow mb-4 border-bottom-primary">
+    <div class="card shadow">
         <a href="#callchaindiv" class="card-header py-3" data-toggle="collapse" 
            role="button" aria-expanded="true" aria-controls="callchaindiv">
             <h6 class="m-0 font-weight-bold text-primary">Call chain ({{ticker}} - {{expiry_picked}})</h6>
@@ -203,13 +182,12 @@
         <div class="card-header py-3">
             <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
               <i class="fas fa-sync"></i>
-              <h8 id="calltimestamp"> Last updated: {{datetime}}, New York time (15 minutes delayed) <h8>
+              <h8 id="calltimestamp"> SPY ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
             </button>
         </div>
         <div class="card-body collapse show" id="callchaindiv">
             <script>
             var ticker = "{{ticker}}";
-            var ticker_type = "{{ticker_type}}";
             var expiry = "{{expiry_picked}}";
             var callchain = {{call_chain}};
             var callqty = Array.apply(null, Array({{call_chain | length}})).map(Number.prototype.valueOf, 0);
@@ -265,7 +243,7 @@
     {% endif %}
 
     {% if put_chain %}
-    <div class="card shadow mb-4 border-bottom-primary">
+    <div class="card shadow">
         <a href="#putchaindiv" class="card-header py-3" data-toggle="collapse" 
            role="button" aria-expanded="true" aria-controls="putchaindiv">
             <h6 class="m-0 font-weight-bold text-primary">Put chain ({{ticker}} - {{expiry_picked}})</h6>
@@ -273,7 +251,7 @@
         <div class="card-header py-3">
             <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
               <i class="fas fa-sync"></i>
-              <h8 id="puttimestamp"> Last updated: {{datetime}}, New York time (15 minutes delayed) <h8>
+              <h8 id="puttimestamp"> SPY ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
             </button>
         </div>
         <div class="card-body" id="putchaindiv">
@@ -332,6 +310,4 @@
     {% endif %}
 
 </div>
-</form>
-
 {% endblock %}

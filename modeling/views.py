@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.template import RequestContext
@@ -6,8 +7,9 @@ import datetime
 import json
 import logging
 import pytz
+import time
 
-from .options_expiry_scraper import scrape_option_dates, scrape_option_expiries
+from .options_expiry_scraper import scrape_all_expiries
 from .options_price_scraper import scrape_option_prices
 from .optimization import fit_distribution_F
 from .distribution import Distribution
@@ -24,6 +26,14 @@ month_map = {'Jan' : 'January', 'Feb' : 'February', 'Mar' : 'March',\
                  'Jul' : 'July', 'Aug' : 'August', 'Sep' : 'September', \
                  'Oct' : 'October', 'Nov' : 'November', 'Dec' : 'December',
 }
+
+def decode_expiry(expiry):
+    month_day, year = expiry.split(',')
+    year = year.strip()
+    month, day = month_day.split(' ')
+    month = month_map[month]
+    return day, month, year
+
 
 def get_date_time():
     dto = datetime.datetime.utcnow()
@@ -154,15 +164,12 @@ def sync(request):
     callqty = request.POST.getlist('callqty[]')
     putqty = request.POST.getlist('putqty[]')
     ticker = request.POST.get('ticker')
-    ticker_type = request.POST.get('ticker_type')
     expiry = request.POST.get('expiry')
     
-    month_day, year = expiry.split(',')
-    month, day = month_day.split(' ')
-    month = month_map[month]
+    day, month, year = decode_expiry(expiry)
 
     # Refresh option table
-    options_chain = scrape_option_prices(ticker, month, year, expiry, ticker_type)
+    options_chain = scrape_option_prices(ticker, month, year, expiry)
     callchain = options_chain.get_call_table()
     putchain = options_chain.get_put_table()
     
@@ -197,6 +204,7 @@ def sync(request):
     portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special)
 
     response = {
+        "price" : options_chain.underlying,
         "callchain" : callchain,
         "putchain" : putchain,
         "chart" : distr.to_dict_array(steps=STEPS),
@@ -318,25 +326,69 @@ def update_chart(request):
 
     return JsonResponse(response)
 
-
 def modeling(request):
+    # Default page view!
     modeling_context = {}
+    ticker = 'SPY'
+
     if request.method == 'POST':
+        logger.info(request.POST)
         # User picked a ticker
         if 'submit_ticker' in request.POST:
             ticker = request.POST.get('new_ticker').upper()
+            logger.info("Picked NEW Ticker {}".format(ticker))
 
-            # Get available expiry dates
-            date_list, ticker_type = scrape_option_dates(ticker, 'stock')
-            modeling_context['ticker_type'] = ticker_type
+        if 'new_exp' in request.POST:
+            expiry_picked = request.POST.get('new_exp')
+            date_list, date_picked, _ = cache.get_or_set(ticker, lambda: scrape_all_expiries(ticker), timeout=60*60)
             if len(date_list) == 0:
                 modeling_context['bad_ticker'] = ticker
-            modeling_context['ticker'] = ticker
-            modeling_context['dates'] = date_list
+            else:
+                modeling_context['expiries'] = date_list
+                modeling_context['date_picked'] = date_picked
+                modeling_context['expiry_picked'] = expiry_picked
+            logger.info("Picked NEW Expiry {}".format(expiry_picked))
+    
+    if 'expiry_picked' not in modeling_context:
+        if len(ticker) == 0:
+            modeling_context['empty_ticker'] = True
+        else:
+            date_list, date_picked, expiry_picked = cache.get_or_set(ticker, lambda: scrape_all_expiries(ticker), timeout=60*60)
+            if len(date_list) == 0:
+                modeling_context['bad_ticker'] = ticker
+            else:
+                modeling_context['expiries'] = date_list
+                modeling_context['date_picked'] = date_picked
+                modeling_context['expiry_picked'] = expiry_picked
 
-            # Logging
-            logger.info("Picked Ticker! Ticker: {}".format(ticker))
+    if 'call_chain' not in modeling_context:
+        if 'expiry_picked' in modeling_context:
+            # Get option chain data
+            expiry_picked = modeling_context['expiry_picked']
+            day, month, year = decode_expiry(expiry_picked)
+            options_chain = scrape_option_prices(ticker, month, year, expiry_picked)
+            call_table = options_chain.get_call_table()
+            put_table = options_chain.get_put_table()
 
+            # Fit distribution
+            distr = fit_distribution_F(options_chain)
+            distr.adjust_min_strike()
+            distr.adjust_max_strike()
+            update_option_expectations(distr, call_table, put_table, special=True)
+
+            modeling_context['price'] = options_chain.underlying
+            modeling_context['call_chain'] = call_table
+            modeling_context['put_chain'] = put_table
+            modeling_context['chart'] = json.dumps(distr.to_dict_array(steps=STEPS))
+            modeling_context['distrib_params'] = distr.params
+            modeling_context['mean_level'] = 0
+            modeling_context['var_level'] = 0
+            modeling_context['datetime'] = get_date_time()
+
+    # Fill in context info for first rendering
+    modeling_context['ticker'] = ticker
+
+    '''
         # User picked a date
         elif 'new_date' in request.POST:
             date_str = request.POST.get('new_date')
@@ -392,6 +444,6 @@ def modeling(request):
 
             # Logging
             logger.info("Picked Expiry! Ticker: {} Expiry: {}".format(ticker, expiry_picked))
-    
+    '''
     # Always render the same page
     return render(request, 'modeling.html', modeling_context)

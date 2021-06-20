@@ -1,8 +1,10 @@
 from html.parser import HTMLParser
-from .options import Option, OptionChain
-
+import logging
 import requests
 
+from .options import Option, OptionChain
+
+logger = logging.getLogger(__name__)
 
 def has_class_pattern(arr, pattern):
     for (tag, val) in arr:
@@ -118,10 +120,13 @@ class MWTableHTMLParser(HTMLParser):
                     pass
 
 
-def scrape_option_prices(ticker, month, year, date, type='stock'):
+def scrape_option_prices(ticker, month, year, date, type='stock'):    
     # New Marketwatch URL pattern
     url = "https://www.marketwatch.com/investing/"+type+"/" + ticker + "/optionstable?optionMonth=" + month + "&optionYear=" + year + "&partial=true"
     res = requests.get(url)
-    parser = MWTableHTMLParser()
-    parser.feed(res.text, date)
-    return parser.options
+    if len(res.text) < 20:
+        return scrape_option_prices(ticker, month, year, date, 'fund')
+    else:
+        parser = MWTableHTMLParser()      
+        parser.feed(res.text, date)
+        return parser.options

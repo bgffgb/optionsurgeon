@@ -1,0 +1,31 @@
+<a class="nav-link dropdown-toggle font-weight-bold" href="#" id="expiriesDropdown" role="button"
+  data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+  <label class="pt-2 pr-2 text-primary"> Expiry: </label>
+  <label class="pt-2 pr-2 text-success">{{expiry_picked}} </label>
+  <i class="fas fa-calendar-alt fa-fw text-primary"></i>
+  <span class="badge badge-danger badge-counter">!</span>
+</a>
+<div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="expiriesDropdown">
+<h6 class="dropdown-header">
+    Pick an expiration
+</h6>
+<script>
+var old_date = "{{date_picked}}";
+</script>
+{% for date, exp_list in expiries.items %}
+<a class="dropdown-item d-flex align-items-center font-weight-bold text-primary" href="javascript:show_expiries('{{date}}')">
+  <div>
+    <span class="font-weight-bold">{{date}}</span>
+  </div>
+</a>
+<div id="{{date}}" {% ifnotequal date date_picked %} style="display:none" {% endifnotequal %}>
+  {% for exp in exp_list%}
+  <button class="dropdown-item d-flex align-items-center" name="new_exp" value="{{exp}}" type="submit" href="#">
+    <div>
+      <span class="font-weight-bold">{{exp}}</span>
+    </div>            
+  </button>
+  {% endfor %}
+</div>
+{% endfor %}
+</div>

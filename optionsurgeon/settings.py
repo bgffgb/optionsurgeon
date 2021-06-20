@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '^&5$t&75#suncs1bd=^kf473o9@r_+&+93@wphi3zbbuxs)o2d'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.15', '34.225.130.189']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.60', '34.225.130.189']
 
 
 # Application definition
@@ -38,10 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'optionsurgeon',
-    'modeling',
-    'guide',
+    'analytical',
     'contact',
+    'guide',
+    'modeling',
+    'optionsurgeon',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +75,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'optionsurgeon.wsgi.application'
 
+GOOGLE_ANALYTICS_GTAG_PROPERTY_ID  = 'G-2XS4HBX97L'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
@@ -138,6 +140,13 @@ LOGGING = {
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     },
+}
+
+# Handle caching
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
+    }
 }
 
 

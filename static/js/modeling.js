@@ -40,7 +40,6 @@ $(document).ready(function() {
         url: "sync",
         data: {
             "ticker": ticker,
-            "ticker_type": ticker_type,
             "expiry": expiry,
             "callqty" : callqty,
             "putqty" : putqty,
@@ -50,12 +49,13 @@ $(document).ready(function() {
         success: function(result) {
             callchain = result["callchain"];
             putchain = result["putchain"];
+            price = result["price"];
 
             rnd_data = result["chart"];
             rnd_modded = result["chart_modded"];          
             render_rnd_charts();
             update_tables();
-            update_timestamp(result["datetime"]);
+            update_timestamp(ticker, price, result["datetime"]);
 
             portfolio_data = result["portfoliochart"];
             portfolio_strikes = result["strikes"];
@@ -69,7 +69,7 @@ $(document).ready(function() {
             update_portfolio(portfolio_qty, portfolio_label, expr, winp, totcost);
         },
         error: function(result) {
-            console.log('Uh Oh. Chart update error:', result);
+            console.log('Uh Oh. Options data sync error:', result);
         }
       });
     }
@@ -192,6 +192,23 @@ $(document).ready(function() {
   render_rnd_charts();
 });
 
+
+function reloadContainer(id, data) {
+  let container = $(id);
+  container.empty();
+  container.html(data);
+}
+
+function show_expiries(date){
+  dd = document.getElementById(old_date);
+  dd.style.display = "none";
+  dd = document.getElementById(date);
+  dd.style.display = "block";
+  dd = document.getElementById("expiriesDropdown");
+  dd.click();
+  old_date = date;
+}
+
 function highlight(obj){
    var orig = obj.style.backgroundColor;
    obj.style.backgroundColor = "gray";
@@ -200,11 +217,14 @@ function highlight(obj){
    }, 1000);
 }
 
-function update_timestamp(datetime) {
-  new_text = "Last updated: " + datetime + ", New York time (15 minutes delayed)"
+function update_timestamp(ticker, price, datetime) {
+  new_text = ticker+" $"+price+" Last updated: " + datetime + ", NYSE time (15 minutes delayed)"
+  console.log(new_text);
   label = document.getElementById("calltimestamp");
   label.textContent = new_text;
   label = document.getElementById("puttimestamp");
+  label.textContent = new_text;
+  label = document.getElementById("toptimestamp");
   label.textContent = new_text;
 }
 
@@ -505,9 +525,9 @@ function render_rnd_charts() {
   cy2 = 60;
   svg.append("circle").attr("cx",cx).attr("cy",cy1).attr("r", 6).style("fill", base_color_on);
   svg.append("circle").attr("cx",cx).attr("cy",cy2).attr("r", 6).style("fill", mod_color_on);
-  svg.append("text").attr("x", cx + 20).attr("y", cy1 + 5).text("Risk Neutral distribution")
+  svg.append("text").attr("x", cx + 20).attr("y", cy1 + 5).text("Risk Neutral distribution (RND)")
     .style("font-size", "15px").attr("alignment-baseline","middle")
-  svg.append("text").attr("x", cx + 20).attr("y", cy2 + 5).text("Predicted distribution")
+  svg.append("text").attr("x", cx + 20).attr("y", cy2 + 5).text("User adjusted RND")
     .style("font-size", "15px").attr("alignment-baseline","middle")
 
   function handleMouseOver(data) {
