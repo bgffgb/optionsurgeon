@@ -124,8 +124,9 @@ def scrape_option_prices(ticker, month, year, date, type='stock'):
     # New Marketwatch URL pattern
     url = "https://www.marketwatch.com/investing/"+type+"/" + ticker + "/optionstable?optionMonth=" + month + "&optionYear=" + year + "&partial=true"
     res = requests.get(url)
+
     if len(res.text) < 20:
-        return scrape_option_prices(ticker, month, year, date, 'fund')
+        return scrape_option_prices(ticker, month, year, date, type='fund')
     else:
         parser = MWTableHTMLParser()      
         parser.feed(res.text, date)

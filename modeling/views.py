@@ -332,10 +332,11 @@ def modeling(request):
     ticker = 'SPY'
 
     if request.method == 'POST':
-        logger.info(request.POST)
         # User picked a ticker
-        if 'submit_ticker' in request.POST:
+        if 'new_ticker' in request.POST:
             ticker = request.POST.get('new_ticker').upper()
+
+        if 'submit_ticker' in request.POST:
             logger.info("Picked NEW Ticker {}".format(ticker))
 
         if 'new_exp' in request.POST:
@@ -388,62 +389,5 @@ def modeling(request):
     # Fill in context info for first rendering
     modeling_context['ticker'] = ticker
 
-    '''
-        # User picked a date
-        elif 'new_date' in request.POST:
-            date_str = request.POST.get('new_date')
-            ticker = request.POST.get('ticker')
-            ticker_type = request.POST.get('ticker_type')
-
-            modeling_context['date_picked'] = date_str
-            modeling_context['ticker'] = ticker
-            modeling_context['ticker_type'] = ticker_type
-            modeling_context['dates'] = request.POST.getlist('date_array')
-
-            # Get expiry dates
-            month, year = date_str.split(' ')            
-            expiries = scrape_option_expiries(ticker, month, year, ticker_type)
-            modeling_context['expiries'] = expiries
-
-            # Logging
-            logger.info("Picked Date! Ticker: {} Date: {}".format(ticker, date_str))
-
-        # User picked an expiry
-        elif 'new_expiry' in request.POST:
-            date_str = request.POST.get('date_picked')
-            ticker = request.POST.get('ticker')
-            ticker_type = request.POST.get('ticker_type')
-            expiry_picked = request.POST.get('new_expiry')
-        
-            modeling_context['date_picked'] = date_str
-            modeling_context['ticker'] = ticker
-            modeling_context['ticker_type'] = ticker_type
-            modeling_context['dates'] = request.POST.getlist('date_array')
-            modeling_context['expiries'] = request.POST.getlist('expiry_array')
-            modeling_context['expiry_picked'] = expiry_picked
-
-            # Get option chain data
-            month, year = date_str.split(' ')
-            options_chain = scrape_option_prices(ticker, month, year, expiry_picked, ticker_type)
-            call_table = options_chain.get_call_table()
-            put_table = options_chain.get_put_table()          
-
-            # Fit distribution
-            distr = fit_distribution_F(options_chain)
-            distr.adjust_min_strike()
-            distr.adjust_max_strike()
-            update_option_expectations(distr, call_table, put_table, special=True)
-
-            modeling_context['call_chain'] = call_table
-            modeling_context['put_chain'] = put_table
-            modeling_context['chart'] = json.dumps(distr.to_dict_array(steps=STEPS))
-            modeling_context['distrib_params'] = distr.params
-            modeling_context['mean_level'] = 0
-            modeling_context['var_level'] = 0
-            modeling_context['datetime'] = get_date_time()
-
-            # Logging
-            logger.info("Picked Expiry! Ticker: {} Expiry: {}".format(ticker, expiry_picked))
-    '''
     # Always render the same page
     return render(request, 'modeling.html', modeling_context)

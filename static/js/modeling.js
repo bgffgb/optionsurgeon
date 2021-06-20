@@ -136,7 +136,6 @@ $(document).ready(function() {
         }
       });
     }
-
     if (portfolio_commands.includes(bval)) {
       e.preventDefault();
       index = $(this)[0].name;      
@@ -157,7 +156,6 @@ $(document).ready(function() {
         el = document.getElementById("p"+index)
         el.innerHTML = putqty[index];
       }
-
       $.ajax({
         type: "POST",
         url: "update_portfolio",
