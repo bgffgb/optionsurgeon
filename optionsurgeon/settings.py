@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'analytical',
     'contact',
     'guide',
     'modeling',
@@ -74,8 +73,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'optionsurgeon.wsgi.application'
-
-GOOGLE_ANALYTICS_GTAG_PROPERTY_ID  = 'G-2XS4HBX97L'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
