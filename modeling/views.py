@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.template import RequestContext
 
@@ -391,3 +391,7 @@ def modeling(request):
 
     # Always render the same page
     return render(request, 'modeling.html', modeling_context)
+
+
+def redir(request):
+    return HttpResponseRedirect('modeling')

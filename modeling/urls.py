@@ -6,6 +6,6 @@ urlpatterns = [
     path('update_portfolio', views.update_portfolio, name='update_portfolio'),
     path('update_chart', views.update_chart, name='update_chart'),
     path('modeling', views.modeling, name='modeling'),
-    path('', views.modeling, name='modeling'),
+    path('', views.redir, name='redir'),
 ]
 

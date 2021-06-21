@@ -1,25 +1,21 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block page_content %}
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="{% static 'js/modeling.js' %}"></script>
-
 <div class="card shadow mb-4 bg-gradient-warning">
   <div class="card-header py-3 bg-gradient-info">
     <h6 class="m-0 font-weight-bold text-white">
-    <a class="text-white" href="guide">First time around? Click here for a guide.<a>
+    <a class="text-white" href="guide">Hunting high expectation options based on custom probability distributions. First time around? Click here for a guide.<a>
     </h6>
   </div>
 </div>
-
 <div class="container-fluid">
   <form action="modeling" method="POST">
   {% csrf_token %}
   <nav class="navbar navbar-expand navbar-light bg-white topbar static-top shadow">
     <div class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-      <!-- Ticker search bar -->
       <div class="input-group">
         <label class="font-weight-bold text-primary pr-2">Ticker:</label>
         <input type="text" class="form-control bg-light border-0" value="{{ticker}}"
@@ -31,7 +27,6 @@
         </div>
       </div>
     </div>
-  
     {% if empty_ticker %}
     <div class="alert-warning">
       <p> Oi, mate! Search field is empty! </p>
@@ -42,8 +37,6 @@
       <p> Oi, mate! Can't find ticker {{bad_ticker}}! </p>
     </div>
     {% endif %}
-
-    <!-- Expiry picker -->
     {% if expiry_picked %}
     <ul class="navbar-nav ml-auto">
       <li class="nav-item dropdown no-arrow mx-1">
@@ -55,7 +48,6 @@
     {% endif %}
   </nav>
   </form>
-
   {% if chart %}
   <div class="card shadow">
         <script>
@@ -63,14 +55,12 @@
         var var_level = {{var_level | escapejs}};
 	var distrib_params = {{distrib_params | escapejs}};
         </script>
-
         <div class="card-header py-3">
             <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
               <i class="fas fa-sync"></i>
-              <h8 id="toptimestamp"> SPY ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
+              <h8 id="toptimestamp"> {{ticker}} ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
             </button>
         </div>
-
         <div class="card-body">
         <script>
 	var rnd_data = JSON.parse('{{chart | escapejs}}');
@@ -125,7 +115,6 @@
         </div>
     </div>
     {% endif %}
-
     {% if chart %}
     <div class="card shadow">
         <a href="#portfolio" class="card-header py-3" data-toggle="collapse" 
@@ -172,7 +161,6 @@
         </div>
     </div>
     {% endif %}
-
     {% if call_chain %}
     <div class="card shadow">
         <a href="#callchaindiv" class="card-header py-3" data-toggle="collapse" 
@@ -182,7 +170,7 @@
         <div class="card-header py-3">
             <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
               <i class="fas fa-sync"></i>
-              <h8 id="calltimestamp"> SPY ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
+              <h8 id="calltimestamp"> {{ticker}} ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
             </button>
         </div>
         <div class="card-body collapse show" id="callchaindiv">
@@ -241,7 +229,6 @@
         </div>
     </div>
     {% endif %}
-
     {% if put_chain %}
     <div class="card shadow">
         <a href="#putchaindiv" class="card-header py-3" data-toggle="collapse" 
@@ -251,7 +238,7 @@
         <div class="card-header py-3">
             <button class="btn btn-primary" name="sync" value="sync" onClick="highlight(this)">
               <i class="fas fa-sync"></i>
-              <h8 id="puttimestamp"> SPY ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
+              <h8 id="puttimestamp"> {{ticker}} ${{price}} Last updated: {{datetime}}, NYSE time (15 minutes delayed) <h8>
             </button>
         </div>
         <div class="card-body" id="putchaindiv">
@@ -308,6 +295,5 @@
         </div>
     </div>
     {% endif %}
-
 </div>
 {% endblock %}
