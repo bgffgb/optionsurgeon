@@ -119,7 +119,8 @@ def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putcha
     # Interpolate strike returns
     mark = 0
     strike_returns = []
-    for i in range(len(interpolated_strikes)):
+    i = 0
+    while i <len(interpolated_strikes):
         if mark == len(strike_list):
             break
         if interpolated_strikes[i] >= strike_list[mark]:
@@ -127,6 +128,9 @@ def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putcha
                                    'e': format_float(portfolio_returns[i]),
                                    'pe': portfolio_returns[i] * prob_array[i]})
             mark += 1
+            i -= 1
+        i += 1
+
     expr = 0
     winp = 0
     for r, p in zip(portfolio_returns, prob_array):
@@ -194,8 +198,8 @@ def sync(request):
 
     # Handle RND
     special = False
-    if mean_level == 0 and var_level == 0:
-        special = True
+    #if mean_level == 0 and var_level == 0:
+    #    special = True
 
     #Update expectations for options
     update_option_expectations(distr_modded, callchain, putchain, special=special)
@@ -244,8 +248,8 @@ def update_portfolio(request):
 
     # Handle RND
     special = False
-    if mean_level == 0 and var_level == 0:
-        special = True
+    #if mean_level == 0 and var_level == 0:
+    #    special = True
 
     # Get portfolio updates
     portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special)
@@ -295,8 +299,8 @@ def update_chart(request):
 
     # Handle RND
     special = False
-    if mean_level == 0 and var_level == 0:
-        special = True
+    #if mean_level == 0 and var_level == 0:
+    #    special = True
 
     #Update expectations for options
     update_option_expectations(distr_modded, callchain, putchain, special=special)

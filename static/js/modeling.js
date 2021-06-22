@@ -217,7 +217,6 @@ function highlight(obj){
 
 function update_timestamp(ticker, price, datetime) {
   new_text = ticker+" $"+price+" Last updated: " + datetime + ", NYSE time (15 minutes delayed)"
-  console.log(new_text);
   label = document.getElementById("calltimestamp");
   label.textContent = new_text;
   label = document.getElementById("puttimestamp");
