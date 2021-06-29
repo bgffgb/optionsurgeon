@@ -103,7 +103,7 @@ class MWTableHTMLParser(HTMLParser):
             if len(data) == 0:
                 return
             self.current_price_warning = False
-            self.options.set_underlying(float(data[1:]))
+            self.options.set_underlying(float(data[1:].strip().replace(',', '')))
             return
 
         # Turn scraping on for correct table only

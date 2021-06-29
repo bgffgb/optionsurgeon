@@ -26,7 +26,7 @@ SECRET_KEY = '^&5$t&75#suncs1bd=^kf473o9@r_+&+93@wphi3zbbuxs)o2d'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.60', '34.225.130.189']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.60', '34.225.130.189', 'www.opsnipe.com', 'opsnipe.com']
 
 
 # Application definition
