@@ -1,14 +1,20 @@
 from collections import OrderedDict
 
+def clean_nan(val):
+    if val != val:
+        return 0
+    return val
+
+
 class Option:
     def __init__(self, type, bid, ask, strike, last=0, change=0, vol=0, oi=0):
-        self.last = last
-        self.change = change
-        self.vol = int(vol)
-        self.oi = int(oi)
-        self.bid = bid
-        self.ask = ask
-        self.strike = strike
+        self.last = clean_nan(last)
+        self.change = clean_nan(change)
+        self.vol = int(clean_nan(vol))
+        self.oi = int(clean_nan(oi))
+        self.bid = clean_nan(bid)
+        self.ask = clean_nan(ask)
+        self.strike = clean_nan(strike)
         self.type = type
 
     def is_valid(self):

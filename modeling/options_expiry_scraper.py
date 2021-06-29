@@ -80,8 +80,7 @@ def get_marketwatch_str(yahoo_expiry):
 
     date = month_long + " " + year
     expiry = month_short + " " + day + ", " + year
-    return date, expiry
-    
+    return date, expiry    
 
 
 def scrape_all_expiries(ticker):

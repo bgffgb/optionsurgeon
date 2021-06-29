@@ -172,7 +172,7 @@ def sync(request):
     day, month, year = decode_expiry(expiry)
 
     # Refresh option table
-    options_chain = scrape_option_prices(ticker, month, year, expiry)
+    options_chain = scrape_option_prices(ticker, expiry)
     callchain = options_chain.get_call_table()
     putchain = options_chain.get_put_table()
     
@@ -370,7 +370,7 @@ def modeling(request):
             # Get option chain data
             expiry_picked = modeling_context['expiry_picked']
             day, month, year = decode_expiry(expiry_picked)
-            options_chain = scrape_option_prices(ticker, month, year, expiry_picked)
+            options_chain = scrape_option_prices(ticker, expiry_picked)
             call_table = options_chain.get_call_table()
             put_table = options_chain.get_put_table()
 

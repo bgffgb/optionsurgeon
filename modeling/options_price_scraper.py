@@ -1,6 +1,7 @@
 from html.parser import HTMLParser
 import logging
 import requests
+import yfinance as yf
 
 from .options import Option, OptionChain
 
@@ -45,7 +46,7 @@ class MWTableHTMLParser(HTMLParser):
     def push_keyword_dict(self):
         if len(self.keyword_dict) <= 1:
             return
-
+        logger.info(self.keyword_dict)      
         if 'CALL_LAST' in self.keyword_dict:
             # Add Call option
             self.options.add_option(Option(last=self.keyword_dict['CALL_LAST'],
@@ -117,17 +118,69 @@ class MWTableHTMLParser(HTMLParser):
                     nr_data = float(stripped_data)
                     self.keyword_dict[self.ORDER[self.status_index]] = nr_data
                 except ValueError as e:
-                    pass
+                    logger.info(e)
 
 
-def scrape_option_prices(ticker, month, year, date, type='stock'):    
+month_to_nr = {
+    'Jan' : '01',
+    'Feb' : '02',
+    'Mar' : '03',
+    'Apr' : '04',
+    'May' : '05',
+    'Jun' : '06',
+    'Jul' : '07',
+    'Aug' : '08',
+    'Sep' : '09',
+    'Oct' : '10',
+    'Nov' : '11',
+    'Dec' : '12',
+}
+
+
+def decode_expiry(expiry):
+    month_day, year = expiry.split(',')
+    year = year.strip()
+    month, day = month_day.split(' ')
+    return day, month, year
+
+
+def scrape_option_prices(ticker, date):
+    oh = yf.Ticker(ticker)    
+    day, month, year = decode_expiry(date)
+    yfdate = year+'-'+month_to_nr[month]+'-'+day
+    pdf_chain = oh.option_chain(yfdate)
+
+    options = OptionChain()
+    for index, row in pdf_chain.calls.iterrows():
+        options.add_option(Option(last=row['lastPrice'], change=row['change'], vol=row['volume'],
+                                  bid=row['bid'], ask=row['ask'], oi=row['openInterest'],
+                                  strike=row['strike'], type='CALL'))
+    for index, row in pdf_chain.puts.iterrows():
+        options.add_option(Option(last=row['lastPrice'], change=row['change'], vol=row['volume'],
+                                  bid=row['bid'], ask=row['ask'], oi=row['openInterest'],
+                                  strike=row['strike'], type='PUT'))
+    # Get price
+    price = oh.history(period='1d')['Close'][0]
+    price = "{:.2f}".format(price)
+    options.set_underlying(price)
+    return options
+
+
+def scrape_option_prices_old(ticker, month, year, date, type='stock'):
     # New Marketwatch URL pattern
     url = "https://www.marketwatch.com/investing/"+type+"/" + ticker + "/optionstable?optionMonth=" + month + "&optionYear=" + year + "&partial=true"
     res = requests.get(url)
 
+    logger.info(ticker)
+    logger.info(url)
+    logger.info(res.text)
+
     if len(res.text) < 20:
         return scrape_option_prices(ticker, month, year, date, type='fund')
     else:
-        parser = MWTableHTMLParser()      
+        parser = MWTableHTMLParser()
         parser.feed(res.text, date)
+        logger.info(len(parser.options.option_list))
+        for o in parser.options.option_list:
+            logger.info(o)
         return parser.options
