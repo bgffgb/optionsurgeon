@@ -46,7 +46,6 @@ class MWTableHTMLParser(HTMLParser):
     def push_keyword_dict(self):
         if len(self.keyword_dict) <= 1:
             return
-        logger.info(self.keyword_dict)      
         if 'CALL_LAST' in self.keyword_dict:
             # Add Call option
             self.options.add_option(Option(last=self.keyword_dict['CALL_LAST'],
@@ -144,7 +143,9 @@ def decode_expiry(expiry):
     return day, month, year
 
 
-def scrape_option_prices(ticker, date):
+def scrape_option_prices_yahoo(ticker, date):
+    # Scrape prices from yahoo finance
+    # Lately, this proved to be extremely unreliable :(
     oh = yf.Ticker(ticker)    
     day, month, year = decode_expiry(date)
     yfdate = year+'-'+month_to_nr[month]+'-'+day
@@ -166,21 +167,18 @@ def scrape_option_prices(ticker, date):
     return options
 
 
-def scrape_option_prices_old(ticker, month, year, date, type='stock'):
-    # New Marketwatch URL pattern
+def scrape_option_prices(ticker, date, type='stock'):
+
+    day, month, year = decode_expiry(date)
+
+    # Used to scrape prices from Marketwatch URL pattern
+    # Downside, marketwatch seems to not list ALL options
     url = "https://www.marketwatch.com/investing/"+type+"/" + ticker + "/optionstable?optionMonth=" + month + "&optionYear=" + year + "&partial=true"
     res = requests.get(url)
 
-    logger.info(ticker)
-    logger.info(url)
-    logger.info(res.text)
-
     if len(res.text) < 20:
-        return scrape_option_prices(ticker, month, year, date, type='fund')
+        return scrape_option_prices(ticker, date, type='fund')
     else:
         parser = MWTableHTMLParser()
         parser.feed(res.text, date)
-        logger.info(len(parser.options.option_list))
-        for o in parser.options.option_list:
-            logger.info(o)
         return parser.options

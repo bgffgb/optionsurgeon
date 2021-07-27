@@ -17,14 +17,12 @@ def add_call_bull_spreads(sorted_call_strikes, options_dict_calls, strikes, prob
 
             bullspread_premium = - options_dict_calls[strike0][0].get_premium() + \
                                  options_dict_calls[strike1][0].get_premium()
-            #implied_prob = -bullspread_premium / (strike1 - strike0)
             implied_prob = (bullspread_premium / (strike1 - strike0)) + 1
 
             if implied_prob < 0:
                 implied_prob = 0
             if implied_prob > 1:
                 implied_prob = 1
-            #print(mid_strike, implied_prob, bullspread_premium)
             strikes.append(mid_strike)
             probs.append(implied_prob)
     return strikes, probs
@@ -40,7 +38,6 @@ def add_put_bull_spreads(sorted_put_strikes, options_dict_puts, strikes, probs, 
 
             bullspread_premium = options_dict_puts[strike0][0].get_premium() - \
                                  options_dict_puts[strike1][0].get_premium()
-            #implied_prob = (bullspread_premium / (strike1 - strike0)) + 1
             implied_prob = -bullspread_premium / (strike1 - strike0)
 
             if implied_prob < 0:
@@ -169,11 +166,15 @@ def fit_distribution_F(options: OptionChain):
     D = 2
     strikes, probs = add_call_bull_spreads(sorted_call_strikes, options_dict_calls, strikes, probs, D)
     strikes, probs = add_put_bull_spreads(sorted_put_strikes, options_dict_puts, strikes, probs, D)
-
-    tic = time.time()
-    popt, _ = curve_fit(curve_fit_optim, strikes, probs)
-    toc = time.time()
-    logger.info("Optimization F: res {} time {}".format(popt, toc-tic))
+    
+    if len(strikes) > 0:
+        tic = time.time()
+        popt, _ = curve_fit(curve_fit_optim, strikes, probs)
+        toc = time.time()
+        logger.info("Optimization F: res {} time {}".format(popt, toc-tic))
+    else:
+        popt = [options.underlying, 1, 1]
+        logger.info("Cannot optimize, arrays empty! Setting it to {}".format(popt))
 
     return Distribution('F', popt)
 

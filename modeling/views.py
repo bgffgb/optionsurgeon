@@ -53,7 +53,7 @@ def format_float(val):
     return "{:.2f}".format(val)
 
 
-def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special):
+def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special=False):
     # Check if portfolio is empty
     if min(callqty) == '0' and max(callqty) == '0' and min(putqty) == '0' and max(putqty) == '0':
         return [], [], [], [], 0, 0, format_float(0.0)
@@ -83,7 +83,7 @@ def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putcha
             portfolio_label.append(o.summary())
             portfolio_qty.append(qty)
 
-            exp, sharpe, option_payout = o.evaluate(interpolated_strikes, prob_array, special=special)
+            exp, sharpe, option_payout = o.evaluate(interpolated_strikes, prob_array, special=False)
             for j in range(len(interpolated_strikes)):
                 portfolio_returns[j] += qty * option_payout[j]
             totcost += qty * o.get_premium()
@@ -95,7 +95,7 @@ def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putcha
             portfolio_label.append(o.summary())
             portfolio_qty.append(qty)
 
-            exp, sharpe, option_payout = o.evaluate(interpolated_strikes, prob_array, special=special)
+            exp, sharpe, option_payout = o.evaluate(interpolated_strikes, prob_array, special=False)
             for j in range(len(interpolated_strikes)):
                 portfolio_returns[j] += qty * option_payout[j]
             totcost += qty * o.get_premium()
@@ -144,17 +144,17 @@ def calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putcha
     return chart, strike_returns, portfolio_label, portfolio_qty, expr, winp, format_float(totcost*100)
 
 
-def update_option_expectations(distr_modded, callchain, putchain, special):
+def update_option_expectations(distr_modded, callchain, putchain, special=False):
     #Update expectations for options
     strikes, prob_array, _ = distr_modded.get_prob_arrays(th_lower=0.001, th_upper=0.001)
     for arr in callchain:
         o = option_from_array('CALL', arr)
-        exp, sharpe, r = o.evaluate(strikes, prob_array, special=special)
+        exp, sharpe, r = o.evaluate(strikes, prob_array, special=False)
         arr[6], arr[7] = exp / (o.get_premium()), sharpe
 
     for arr in putchain:
         o = option_from_array('PUT', arr)
-        exp, sharpe, _ = o.evaluate(strikes, prob_array, special=special)
+        exp, sharpe, _ = o.evaluate(strikes, prob_array, special=False)
         arr[6], arr[7] = exp / (o.get_premium()), sharpe
 
 
@@ -195,16 +195,11 @@ def sync(request):
     distr.min_strike, distr_modded.min_strike = minv, minv
     distr.max_strike, distr_modded.max_strike = maxv, maxv
 
-    # Handle RND
-    special = False
-    #if mean_level == 0 and var_level == 0:
-    #    special = True
-
     #Update expectations for options
-    update_option_expectations(distr_modded, callchain, putchain, special=special)
+    update_option_expectations(distr_modded, callchain, putchain, special=False)
 
     # Get portfolio updates
-    portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special)
+    portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, False)
 
     response = {
         "price" : options_chain.underlying,
@@ -245,13 +240,8 @@ def update_portfolio(request):
     distr_modded.adjust_min_strike()
     distr_modded.adjust_max_strike()
 
-    # Handle RND
-    special = False
-    #if mean_level == 0 and var_level == 0:
-    #    special = True
-
     # Get portfolio updates
-    portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special)
+    portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, False)
     response = {
         "portfoliochart" : portfoliochart,
         "strikes" : strike_returns,
@@ -296,13 +286,8 @@ def update_chart(request):
     distr.min_strike, distr_modded.min_strike = minv, minv
     distr.max_strike, distr_modded.max_strike = maxv, maxv
 
-    # Handle RND
-    special = False
-    #if mean_level == 0 and var_level == 0:
-    #    special = True
-
     #Update expectations for options
-    update_option_expectations(distr_modded, callchain, putchain, special=special)
+    update_option_expectations(distr_modded, callchain, putchain, special=False)
 
     response = {
         "chart" : distr.to_dict_array(steps=STEPS),
@@ -312,7 +297,7 @@ def update_chart(request):
     }
 
     # Get portfolio updates
-    portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, special)
+    portfoliochart, strike_returns, portfolio_label, portfolio_qty, expr, winp, totcost = calculate_portfolio_details(distr_modded, callqty, putqty, callchain, putchain, False)
 
     response["portfoliochart"] = portfoliochart
     response["strikes"] = strike_returns
@@ -378,7 +363,7 @@ def modeling(request):
             distr = fit_distribution_F(options_chain)
             distr.adjust_min_strike()
             distr.adjust_max_strike()
-            update_option_expectations(distr, call_table, put_table, special=True)
+            update_option_expectations(distr, call_table, put_table, special=False)
 
             modeling_context['price'] = options_chain.underlying
             modeling_context['call_chain'] = call_table
